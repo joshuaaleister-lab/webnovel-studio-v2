@@ -69,6 +69,19 @@ textarea{ resize:vertical; }
     <p class="sub">Give it an idea. It builds a story bible, then writes chapter after chapter — keeping continuity, autosaving as it goes.</p>
   </header>
 
+  <!-- Projects -->
+  <div class="panel">
+    <label class="label" for="projSelect">Project <span style="font-weight:400;font-size:12px;color:var(--faint)">— each is a separate story, saved in this browser</span></label>
+    <div class="row" style="align-items:flex-end">
+      <div><select id="projSelect"></select></div>
+      <div style="display:flex;gap:8px;align-items:flex-end">
+        <button class="btn btn-ghost" id="newProjTop">＋ New</button>
+        <button class="btn btn-ghost" id="renameProj">✎ Rename</button>
+        <button class="btn btn-ghost" id="delProj">🗑 Delete</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Connection -->
   <div class="panel">
     <div class="row">
@@ -77,6 +90,8 @@ textarea{ resize:vertical; }
         <select id="mode">
           <option value="gemini" selected>Gemini — free</option>
           <option value="groq">Groq — free &amp; fast (Llama 3.3 70B)</option>
+          <option value="deepseek">DeepSeek — free (great prose)</option>
+          <option value="qwen">Qwen — free (strong fiction)</option>
           <option value="hybrid">Claude — better prose (a few cents/chapter)</option>
         </select>
       </div>
@@ -85,7 +100,7 @@ textarea{ resize:vertical; }
         <input id="backendurl" placeholder="http://localhost:8787  (or your deployed URL)" />
       </div>
     </div>
-    <div class="mini" id="connmini">Your backend must be running. Local: http://localhost:8787 · Vercel: https://your-app.vercel.app/api</div>
+    <div class="mini" id="connmini">Your backend must be running. Local: http://localhost:8787 · Vercel: https://your-app.vercel.app/api · Free engines auto-fall back to each other if one is rate-limited.</div>
   </div>
 
   <!-- Setup -->
@@ -125,10 +140,13 @@ textarea{ resize:vertical; }
     <label class="label" for="bible">Story bible <span style="font-weight:400;font-size:12px;color:var(--faint)">(editable — tweak anything before writing)</span></label>
     <textarea id="bible" rows="10"></textarea>
     <div class="toolbar">
+      <button class="btn btn-ghost" id="genTitle">✦ Title ideas</button>
+      <button class="btn btn-ghost" id="genSynopsis">✦ Synopsis (blurb)</button>
       <button class="btn btn-ghost" id="genCover">✦ Generate cover</button>
       <button class="btn btn-ghost" id="uploadCoverBtn">⬆ Upload cover</button>
       <input type="file" id="coverFile" accept="image/*" style="display:none" />
     </div>
+    <div id="bibleExtra"></div>
     <div class="cover" id="coverWrap"></div>
   </div>
 
@@ -148,7 +166,8 @@ textarea{ resize:vertical; }
       <div class="toolbar"><button class="btn btn-ghost" id="planArcs">✦ Plan the arcs automatically</button></div>
       <div id="planStatus"></div>
     </details>
-    <input id="direction" placeholder="(optional) one-off direction for the NEXT chapter — e.g. 'introduce a rival', 'time skip 3 years'" />
+    <label class="label" for="direction" style="font-size:14px">✎ Your notes for the next chapter <span style="font-weight:400;font-size:12px;color:var(--faint)">— a few words, bullets, or a sentence. The chapter is built around these.</span></label>
+    <textarea id="direction" rows="2" placeholder="e.g. they reach the city gates at dusk; introduce a sly merchant who knows the villain; end on the rival appearing"></textarea>
     <div class="toolbar" style="margin-top:10px">
       <button class="btn btn-primary" id="writeOne">Write next chapter</button>
       <button class="btn btn-ghost" id="autoWrite">▶ Auto-write</button>
@@ -163,6 +182,7 @@ textarea{ resize:vertical; }
       <button class="btn btn-ghost" id="exportMd">⬇ Export manuscript (.md)</button>
       <button class="btn btn-ghost" id="exportJson">⬇ Save backup (.json)</button>
       <button class="btn btn-ghost" id="importBtn">⬆ Load backup</button>
+      <button class="btn btn-ghost" id="clearChaps">🗑 Clear all chapters</button>
       <button class="btn btn-ghost" id="newProj">＋ New project</button>
       <input id="importFile" type="file" accept="application/json" style="display:none" />
     </div>
@@ -171,7 +191,6 @@ textarea{ resize:vertical; }
 </div>
 
 <script>
-const SKEY = "webnovel-studio-project-v1";
 let proj = newProject();
 let busy = false, stopFlag = false, activeChapter = -1, editing = false;
 
@@ -209,9 +228,88 @@ function mdToHtml(text){
 function setStatus(id, html){ document.getElementById(id).innerHTML = html; }
 function loadingHtml(t){ return `<div class="loading"><span class="dot"></span><span class="dot"></span><span class="dot"></span><em>${t}</em></div>`; }
 
-// ---- persistence ----
-function save(){ try{ localStorage.setItem(SKEY, JSON.stringify(proj)); }catch(e){ /* quota: rely on manual backup */ } }
-function load(){ try{ const s = localStorage.getItem(SKEY); if(s){ proj = JSON.parse(s); return true; } }catch(e){} return false; }
+// ---- persistence (multi-project) ----
+const SKEY = "webnovel-studio-project-v1";   // legacy single-project key (migrated)
+const IDX  = "wns-projects";                  // [{id,title}]
+const CUR  = "wns-current";                   // current project id
+const PKEY = (id)=> "wns-proj-" + id;
+let curId = null;
+
+function newId(){ return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function getIndex(){ try{ return JSON.parse(localStorage.getItem(IDX)) || []; }catch{ return []; } }
+function setIndex(list){ try{ localStorage.setItem(IDX, JSON.stringify(list)); }catch{} }
+function projLabel(p){ return (p && (p.name || p.title)) || "Untitled"; }
+
+function save(){
+  if(!curId) curId = newId();
+  try{ localStorage.setItem(PKEY(curId), JSON.stringify(proj)); }catch(e){ /* quota */ }
+  const list = getIndex();
+  const i = list.findIndex(x=>x.id===curId);
+  const entry = { id: curId, title: projLabel(proj) };
+  if(i>=0) list[i]=entry; else list.push(entry);
+  setIndex(list);
+  try{ localStorage.setItem(CUR, curId); }catch{}
+}
+function loadProject(id){
+  try{ const s = localStorage.getItem(PKEY(id)); if(s){ proj = JSON.parse(s); curId = id; localStorage.setItem(CUR, id); return true; } }catch(e){}
+  return false;
+}
+// Returns true if a project was loaded at boot (and migrates legacy data once).
+function load(){
+  let list = getIndex();
+  // one-time migration from the old single-project key
+  if(list.length===0){
+    let legacy=null; try{ legacy = JSON.parse(localStorage.getItem(SKEY)); }catch{}
+    if(legacy && (legacy.bible || (legacy.chapters && legacy.chapters.length))){
+      curId = newId(); proj = legacy;
+      try{ localStorage.setItem(PKEY(curId), JSON.stringify(proj)); }catch{}
+      list = [{ id: curId, title: projLabel(proj) }]; setIndex(list);
+      try{ localStorage.setItem(CUR, curId); }catch{}
+      return true;
+    }
+    return false;
+  }
+  const want = localStorage.getItem(CUR);
+  const id = (want && list.some(x=>x.id===want)) ? want : list[0].id;
+  return loadProject(id);
+}
+
+function refreshProjectBar(){
+  const sel = document.getElementById("projSelect"); if(!sel) return;
+  const list = getIndex();
+  sel.innerHTML = list.map(x=>`<option value="${esc(x.id)}" ${x.id===curId?"selected":""}>${esc(x.title||"Untitled")}</option>`).join("") || `<option>—</option>`;
+}
+function blankUI(){
+  ["idea","genre","tone","target","bible","direction","canon","goal","cast","outline"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
+  const be=document.getElementById("bibleExtra"); if(be) be.innerHTML="";
+  document.getElementById("biblePanel").style.display="none";
+  document.getElementById("studioPanel").style.display="none";
+}
+function switchProject(id){
+  if(id===curId) return;
+  save();                       // persist the one we're leaving
+  if(loadProject(id)){ blankUI(); hydrate(); refreshProjectBar(); }
+}
+function createProject(){
+  save();
+  proj = newProject(); curId = newId();
+  blankUI(); save(); refreshProjectBar();
+  document.getElementById("statline") && (document.getElementById("statline").textContent="");
+}
+function renameProject(){
+  const name = prompt("Name this project:", projLabel(proj)); if(name==null) return;
+  proj.name = name.trim() || proj.title || "Untitled"; save(); refreshProjectBar();
+}
+function deleteProject(){
+  const list = getIndex();
+  if(list.length<=1){ if(!confirm("This is your only project. Delete it and start fresh?")) return; }
+  else if(!confirm(`Delete project "${projLabel(proj)}"? This cannot be undone.`)) return;
+  try{ localStorage.removeItem(PKEY(curId)); }catch{}
+  const rest = getIndex().filter(x=>x.id!==curId); setIndex(rest);
+  if(rest.length){ loadProject(rest[0].id); blankUI(); hydrate(); }
+  else { proj = newProject(); curId = newId(); blankUI(); save(); }
+  refreshProjectBar();
+}
 
 // ---- setup ----
 function readSetup(){
@@ -319,7 +417,7 @@ ${proj.canon ? "\nCANON — absolute facts, never contradict:\n"+proj.canon+"\n"
 STORY SO FAR (recent chapter recaps):
 ${proj.beats.length ? recentBeats() : "(this is the very first chapter)"}
 
-${tail ? "LAST LINES OF THE PREVIOUS CHAPTER:\n"+tail+"\n" : ""}${arcLine ? arcLine : ""}${proj.goal ? "CURRENT STORY GOAL (steer toward this): "+proj.goal+"\n\n" : ""}Write CHAPTER ${n}${dir ? " — also follow this one-off direction: "+dir : ""}.
+${tail ? "LAST LINES OF THE PREVIOUS CHAPTER:\n"+tail+"\n" : ""}${arcLine ? arcLine : ""}${proj.goal ? "CURRENT STORY GOAL (steer toward this): "+proj.goal+"\n\n" : ""}Write CHAPTER ${n}.${dir ? "\nAUTHOR'S NOTES for this chapter (build the chapter around these, while keeping continuity): "+dir+"\n" : ""}
 Aim for about ${words} words. Advance the plot meaningfully; end on a hook.
 Begin with a single line exactly like: ## Chapter ${n}: <a short evocative title>
 Then write the chapter prose.
@@ -415,7 +513,8 @@ function renderStudio(){
       `<span class="spacer"></span>`+
       `<button class="rbtn" data-act="copy">⧉ Copy</button>`+
       `<button class="rbtn" data-act="edit">✎ Edit</button>`+
-      (isLast?`<button class="rbtn" data-act="rewrite">↻ Rewrite</button><button class="rbtn danger" data-act="delete">🗑 Delete</button>`:"")+
+      (isLast?`<button class="rbtn" data-act="rewrite">↻ Rewrite</button>`:"")+
+      `<button class="rbtn danger" data-act="delete">🗑 Delete</button>`+
       `</div><h2>Chapter ${c.n}: ${esc(c.title)}</h2>${mdToHtml(c.text)}`;
   }
   document.getElementById("coverWrap").innerHTML = proj.cover ? `<img src="${esc(proj.cover)}" alt="cover" referrerpolicy="no-referrer" onerror="this.style.opacity=0.15"/>` : "";
@@ -437,10 +536,21 @@ function saveEdit(){
   c.text=(document.getElementById("editText").value||"").trim();
   editing=false; renderStudio(); save();
 }
-function deleteLast(){
+function deleteChapter(idx){
+  if(busy) return;
+  if(idx==null || idx<0) idx = activeChapter;
+  const c=proj.chapters[idx]; if(!c) return;
+  if(!confirm(`Delete Chapter ${c.n}: "${c.title}"? Later chapters are renumbered — this can affect continuity.`)) return;
+  proj.chapters.splice(idx,1);
+  if(idx < proj.beats.length) proj.beats.splice(idx,1);
+  proj.chapters.forEach((ch,i)=>{ ch.n=i+1; });
+  activeChapter = proj.chapters.length ? Math.min(proj.chapters.length-1, Math.max(0, idx-1)) : -1;
+  editing=false; renderStudio(); save();
+}
+function clearAllChapters(){
   if(busy || !proj.chapters.length) return;
-  if(!confirm("Delete the latest chapter?")) return;
-  proj.chapters.pop(); proj.beats.pop(); activeChapter=proj.chapters.length-1; editing=false;
+  if(!confirm("Clear ALL chapters? Your bible, canon, characters, arcs and cover are kept — only the written chapters are removed. This cannot be undone.")) return;
+  proj.chapters=[]; proj.beats=[]; activeChapter=-1; editing=false;
   renderStudio(); save();
 }
 async function rewriteLast(){
@@ -504,6 +614,40 @@ function uploadCover(file){
   reader.readAsDataURL(file);
 }
 
+// ---- title & synopsis generators ----
+function showExtra(label, text){
+  const box = document.getElementById("bibleExtra");
+  box.innerHTML = `<div class="banner ok" style="margin-top:10px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><strong>${esc(label)}</strong><button class="rbtn" id="copyExtra">⧉ Copy</button></div><div id="extraText" style="white-space:pre-wrap;font-style:normal">${esc(text)}</div></div>`;
+  const cb = document.getElementById("copyExtra");
+  if(cb) cb.addEventListener("click", async ()=>{ try{ await navigator.clipboard.writeText(text); cb.textContent="✓ Copied"; setTimeout(()=>cb.textContent="⧉ Copy",1300);}catch{} });
+}
+async function genTitle(){
+  if(busy) return;
+  proj.bible = document.getElementById("bible").value;
+  if(!proj.bible.trim()){ document.getElementById("bibleExtra").innerHTML = `<div class="banner">Build the story bible first.</div>`; return; }
+  busy = true; const btn=document.getElementById("genTitle"); btn.disabled=true; const o=btn.textContent; btn.textContent="✦ Thinking…";
+  try{
+    const sys = "You are a bestselling web-serial title strategist. Titles must be catchy, searchable, easy to say aloud, and emotionally magnetic. No explanations.";
+    const p = `From this story bible, give 8 original title options for a web novel (platforms like Webnovel/Royal Road). Mix mystery hooks, progression/system hooks, and pure-atmosphere options. Output ONLY a numbered list, one title per line, no commentary.\n\nSTORY BIBLE:\n${proj.bible}`;
+    const out = await callStory(sys, p, 500);
+    showExtra("Title ideas", out);
+  }catch(e){ document.getElementById("bibleExtra").innerHTML = `<div class="banner">${esc(e.message)}</div>`; }
+  busy=false; btn.disabled=false; btn.textContent=o;
+}
+async function genSynopsis(){
+  if(busy) return;
+  proj.bible = document.getElementById("bible").value;
+  if(!proj.bible.trim()){ document.getElementById("bibleExtra").innerHTML = `<div class="banner">Build the story bible first.</div>`; return; }
+  busy = true; const btn=document.getElementById("genSynopsis"); btn.disabled=true; const o=btn.textContent; btn.textContent="✦ Writing…";
+  try{
+    const sys = "You are a web-novel blurb specialist. Blurbs are short (110-170 words), open with one punchy hook line, sell the central QUESTION not the plot, and end on a threat or promise. Reader-facing copy only — no meta, no headings except the title.";
+    const p = `Write a Webnovel-ready synopsis (book description) for this story. Format:\n- The title on its own line.\n- One italic-style hook line.\n- 2-3 short paragraphs that set the world, the protagonist, and the central mystery WITHOUT spoiling answers.\n- A final one-line promise of dread or stakes.\n\nSTORY BIBLE:\n${proj.bible}`;
+    const out = await callStory(sys, p, 700);
+    showExtra("Synopsis (paste into Webnovel's description)", out);
+  }catch(e){ document.getElementById("bibleExtra").innerHTML = `<div class="banner">${esc(e.message)}</div>`; }
+  busy=false; btn.disabled=false; btn.textContent=o;
+}
+
 // ---- export / import ----
 function download(name, content, type){
   const blob = new Blob([content], { type }); const url = URL.createObjectURL(blob);
@@ -555,7 +699,7 @@ document.getElementById("exportMd").addEventListener("click", exportMd);
 document.getElementById("exportJson").addEventListener("click", exportJson);
 document.getElementById("importBtn").addEventListener("click", ()=>document.getElementById("importFile").click());
 document.getElementById("importFile").addEventListener("change", e=>{ if(e.target.files[0]) importJson(e.target.files[0]); });
-document.getElementById("newProj").addEventListener("click", ()=>{ if(confirm("Start a new project? Export a backup first if you want to keep this one.")){ proj = newProject(); localStorage.removeItem(SKEY); document.getElementById("biblePanel").style.display="none"; document.getElementById("studioPanel").style.display="none"; ["idea","genre","tone","target","bible","direction","canon","goal","cast","outline"].forEach(id=>document.getElementById(id).value=""); } });
+document.getElementById("newProj").addEventListener("click", ()=>{ if(confirm("Start a new project? The current one stays saved — switch back anytime from the Project dropdown.")){ createProject(); } });
 document.getElementById("chaplist").addEventListener("click", e=>{ const ci = e.target.closest("[data-i]"); if(ci){ activeChapter = +ci.dataset.i; editing=false; renderStudio(); } });
 document.getElementById("reader").addEventListener("click", e=>{
   const b = e.target.closest("[data-act]"); if(!b) return;
@@ -567,13 +711,22 @@ document.getElementById("reader").addEventListener("click", e=>{
   else if(a==="save") saveEdit();
   else if(a==="cancel") cancelEdit();
   else if(a==="rewrite") rewriteLast();
-  else if(a==="delete") deleteLast();
+  else if(a==="delete") deleteChapter(activeChapter);
 });
 ["canon","goal","cast","outline"].forEach(id=>document.getElementById(id).addEventListener("change", ()=>{
   proj.canon = document.getElementById("canon").value; proj.goal = document.getElementById("goal").value; proj.cast = document.getElementById("cast").value; proj.outline = document.getElementById("outline").value; save();
 }));
 document.getElementById("backendurl").addEventListener("change", ()=>{ proj._backend = backendBase(); save(); });
+document.getElementById("genTitle").addEventListener("click", genTitle);
+document.getElementById("genSynopsis").addEventListener("click", genSynopsis);
+document.getElementById("clearChaps").addEventListener("click", clearAllChapters);
+document.getElementById("newProjTop").addEventListener("click", ()=>{ createProject(); });
+document.getElementById("renameProj").addEventListener("click", renameProject);
+document.getElementById("delProj").addEventListener("click", deleteProject);
+document.getElementById("projSelect").addEventListener("change", e=>{ switchProject(e.target.value); });
 
 // ---- boot ----
 if(load()){ if(proj._backend) document.getElementById("backendurl").value = proj._backend; hydrate(); }
+else { curId = newId(); save(); }
+refreshProjectBar();
 </script>
