@@ -76,6 +76,7 @@ textarea{ resize:vertical; }
         <label class="label" for="mode">Engine</label>
         <select id="mode">
           <option value="gemini" selected>Gemini — free</option>
+          <option value="groq">Groq — free &amp; fast (Llama 3.3 70B)</option>
           <option value="hybrid">Claude — better prose (a few cents/chapter)</option>
         </select>
       </div>
@@ -176,7 +177,7 @@ function newProject(){ return { setup:{}, title:"Untitled", bible:"", chapters:[
 
 // ---- backend ----
 function backendBase(){ return document.getElementById("backendurl").value.trim().replace(/\/+$/,""); }
-function provider(){ return document.getElementById("mode").value === "hybrid" ? "claude" : "gemini"; }
+function provider(){ const v = document.getElementById("mode").value; return v === "hybrid" ? "claude" : v; }
 function isRateLimit(msg){ return /quota|exceed|rate|429|RESOURCE_EXHAUSTED|limit: 0/i.test(msg||""); }
 
 async function callStory(system, prompt, maxTokens){
