@@ -126,6 +126,8 @@ textarea{ resize:vertical; }
     <textarea id="bible" rows="10"></textarea>
     <div class="toolbar">
       <button class="btn btn-ghost" id="genCover">✦ Generate cover</button>
+      <button class="btn btn-ghost" id="uploadCoverBtn">⬆ Upload cover</button>
+      <input type="file" id="coverFile" accept="image/*" style="display:none" />
     </div>
     <div class="cover" id="coverWrap"></div>
   </div>
@@ -416,7 +418,7 @@ function renderStudio(){
       (isLast?`<button class="rbtn" data-act="rewrite">↻ Rewrite</button><button class="rbtn danger" data-act="delete">🗑 Delete</button>`:"")+
       `</div><h2>Chapter ${c.n}: ${esc(c.title)}</h2>${mdToHtml(c.text)}`;
   }
-  document.getElementById("coverWrap").innerHTML = proj.cover ? `<img src="${esc(proj.cover)}" alt="cover"/>` : "";
+  document.getElementById("coverWrap").innerHTML = proj.cover ? `<img src="${esc(proj.cover)}" alt="cover" referrerpolicy="no-referrer" onerror="this.style.opacity=0.15"/>` : "";
 }
 
 // ---- chapter editing / nav ----
@@ -458,8 +460,48 @@ async function rewriteLast(){
 function genCover(){
   proj.bible = document.getElementById("bible").value;
   const desc = (proj.title + ". " + (proj.setup.genre||"") + " book cover art, dramatic, cinematic, no text, no letters").replace(/[#*`]/g," ").slice(0,400);
-  proj.cover = `https://image.pollinations.ai/prompt/${encodeURIComponent(desc)}?width=768&height=1024&nologo=true&seed=${Math.floor(Math.random()*1e6)}&model=flux`;
-  renderStudio(); save();
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(desc)}?width=768&height=1024&nologo=true&seed=${Math.floor(Math.random()*1e6)}&model=flux`;
+  const wrap = document.getElementById("coverWrap");
+  const btn = document.getElementById("genCover");
+  if(btn){ btn.disabled = true; btn.dataset._o = btn.textContent; btn.textContent = "✦ Generating…"; }
+  if(wrap) wrap.innerHTML = loadingHtml("painting your cover — this can take 10–30s…");
+  const img = new Image();
+  img.referrerPolicy = "no-referrer";
+  img.onload = ()=>{
+    proj.cover = url;
+    if(btn){ btn.disabled = false; btn.textContent = btn.dataset._o || "✦ Generate cover"; }
+    renderStudio(); save();
+  };
+  img.onerror = ()=>{
+    if(btn){ btn.disabled = false; btn.textContent = btn.dataset._o || "✦ Generate cover"; }
+    if(wrap) wrap.innerHTML = `<div class="banner">Cover service didn't respond. Tap "Generate cover" again, or use "Upload cover" to add your own.</div>`;
+  };
+  img.src = url;
+}
+
+function uploadCover(file){
+  if(!file) return;
+  if(!/^image\//.test(file.type)){ alert("Please choose an image file (JPG or PNG)."); return; }
+  const wrap = document.getElementById("coverWrap");
+  if(wrap) wrap.innerHTML = loadingHtml("loading your cover…");
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    const im = new Image();
+    im.onload = ()=>{
+      // downscale so the embedded image stays small enough for browser storage
+      const maxW = 768;
+      const scale = Math.min(1, maxW / im.width);
+      const w = Math.round(im.width * scale), h = Math.round(im.height * scale);
+      const c = document.createElement("canvas"); c.width = w; c.height = h;
+      c.getContext("2d").drawImage(im, 0, 0, w, h);
+      proj.cover = c.toDataURL("image/jpeg", 0.85);
+      renderStudio(); save();
+    };
+    im.onerror = ()=>{ if(wrap) wrap.innerHTML = `<div class="banner">Couldn't read that image. Try a JPG or PNG.</div>`; };
+    im.src = e.target.result;
+  };
+  reader.onerror = ()=>{ if(wrap) wrap.innerHTML = `<div class="banner">Couldn't read that file.</div>`; };
+  reader.readAsDataURL(file);
 }
 
 // ---- export / import ----
@@ -506,6 +548,8 @@ document.getElementById("writeOne").addEventListener("click", writeOne);
 document.getElementById("autoWrite").addEventListener("click", autoWrite);
 document.getElementById("stop").addEventListener("click", ()=>{ stopFlag = true; });
 document.getElementById("genCover").addEventListener("click", genCover);
+document.getElementById("uploadCoverBtn").addEventListener("click", ()=>document.getElementById("coverFile").click());
+document.getElementById("coverFile").addEventListener("change", (e)=>{ const f = e.target.files && e.target.files[0]; uploadCover(f); e.target.value=""; });
 document.getElementById("planArcs").addEventListener("click", planArcs);
 document.getElementById("exportMd").addEventListener("click", exportMd);
 document.getElementById("exportJson").addEventListener("click", exportJson);
