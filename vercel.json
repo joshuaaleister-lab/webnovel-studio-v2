@@ -1,13 +1,7 @@
 {
-  "version": 2,
-  "builds": [
-    { "src": "api/*.js", "use": "@vercel/node" },
-    { "src": "*.html", "use": "@vercel/static" }
-  ],
-  "routes": [
-    { "src": "/story", "dest": "/api/story" },
-    { "src": "/image", "dest": "/api/image" },
-    { "handle": "filesystem" },
-    { "src": "/", "dest": "/webnovel-studio.html" }
+  "rewrites": [
+    { "source": "/", "destination": "/webnovel-studio.html" },
+    { "source": "/story", "destination": "/api/story" },
+    { "source": "/image", "destination": "/api/image" }
   ]
 }
