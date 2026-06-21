@@ -1,1 +1,1787 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Webnovel Studio v4 — The Tally Edition</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,500&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+:root{
+  --ink:#16130d;--card:#1b160e;--card2:#221c12;--paper:#efe6d6;
+  --muted:#a2937a;--faint:#6f6450;--gold:#d8a94e;--gold-2:#e9c578;
+  --crimson:#bb4a31;--green:#4a9b6f;--line:rgba(216,169,78,.20);
+}
+*{box-sizing:border-box;}
+body{margin:0;min-height:100vh;background:radial-gradient(1100px 560px at 85% -10%,rgba(216,169,78,.10),transparent 60%),var(--ink);color:var(--paper);font-family:'Spectral',Georgia,serif;font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:960px;margin:0 auto;padding:36px 20px 90px;}
+header{text-align:center;margin-bottom:24px;}
+.kicker{font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--gold);}
+h1{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(36px,7vw,60px);margin:.12em 0;letter-spacing:-.02em;}
+h1 em{font-style:italic;font-weight:500;color:var(--gold-2);}
+.sub{color:var(--muted);font-style:italic;font-size:15px;}
+.panel{background:linear-gradient(180deg,rgba(216,169,78,.05),rgba(0,0,0,.10));border:1px solid var(--line);border-radius:5px;padding:18px;margin-bottom:16px;}
+.label{font-family:'Fraunces',serif;font-style:italic;color:var(--gold-2);font-size:15px;display:block;margin-bottom:5px;}
+input,textarea,select{width:100%;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:3px;color:var(--paper);font-family:'Spectral',serif;font-size:15px;padding:9px 12px;outline:none;}
+input:focus,textarea:focus,select:focus{border-color:var(--gold);}
+textarea{resize:vertical;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.shelf-overlay{position:fixed;inset:0;z-index:5000;background:rgba(10,8,5,.92);backdrop-filter:blur(4px);overflow:auto;padding:24px 16px;}
+.shelf-inner{max-width:1000px;margin:0 auto;}
+.shelf-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;position:sticky;top:0;background:rgba(10,8,5,.6);padding:6px 0;}
+.shelf-head h2{font-family:'Fraunces',serif;color:var(--gold-2);font-size:30px;margin:0;}
+.shelf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:18px;}
+.book{cursor:pointer;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:rgba(0,0,0,.3);transition:transform .15s,border-color .15s;}
+.book:hover{transform:translateY(-4px);border-color:var(--gold);}
+.book.current{border-color:var(--gold-2);box-shadow:0 0 0 2px var(--gold-2);}
+.book-cover{width:100%;aspect-ratio:3/4;object-fit:cover;display:block;background:linear-gradient(160deg,#2a2114,#15110a);}
+.book-cover.placeholder{display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;color:var(--gold);font-size:42px;}
+.book-meta{padding:9px 10px;}
+.book-title{font-family:'Fraunces',serif;color:var(--paper);font-size:14px;line-height:1.25;margin-bottom:3px;}
+.book-sub{font-size:11px;color:var(--faint);}
+.book-new{display:flex;align-items:center;justify-content:center;aspect-ratio:3/4;border:1px dashed var(--line);border-radius:10px;cursor:pointer;color:var(--muted);font-size:14px;transition:all .15s;}
+.book-new:hover{border-color:var(--gold);color:var(--gold-2);}
+.design-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-top:8px;}
+.design-card{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:rgba(0,0,0,.25);}
+.design-portrait{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:linear-gradient(160deg,#241d12,#15110a);}
+.design-portrait.ph{display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:12px;text-align:center;padding:8px;}
+.design-body{padding:9px 10px;}
+.design-name{font-family:'Fraunces',serif;color:var(--gold-2);font-size:14px;margin-bottom:3px;}
+.design-look{font-size:11px;color:var(--muted);line-height:1.4;max-height:96px;overflow:auto;}
+.design-card .toolbar{padding:0 10px 10px;}
+.design-card .rbtn{font-size:11px;}
+.scene-badge{display:inline-block;font-size:11px;font-family:'Spectral',serif;background:rgba(63,182,186,.18);color:#7fd6d9;border:1px solid rgba(63,182,186,.4);border-radius:12px;padding:2px 9px;vertical-align:middle;text-transform:capitalize;letter-spacing:.04em;}
+.chip{background:rgba(216,169,78,.08);border:1px solid var(--line);color:var(--muted);border-radius:20px;padding:4px 11px;font-size:12px;cursor:pointer;font-family:'Spectral',serif;transition:all .15s;}
+.chip:hover{border-color:var(--gold);color:var(--gold-2);}
+.chip.active{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#1a1408;border-color:var(--gold);font-weight:600;}
+.row{display:flex;gap:10px;flex-wrap:wrap;}
+.row>div{flex:1;min-width:140px;}
+.btn{font-family:'Fraunces',serif;font-size:14px;cursor:pointer;border-radius:3px;padding:10px 17px;border:1px solid transparent;transition:all .15s;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-primary{background:var(--gold);color:#1a1407;font-weight:600;}
+.btn-primary:hover:not(:disabled){background:var(--gold-2);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line);}
+.btn-ghost:hover:not(:disabled){color:var(--paper);border-color:var(--gold);}
+.btn-stop{background:var(--crimson);color:#fff;}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.mini{font-size:12px;color:var(--faint);margin-top:5px;font-style:italic;}
+.banner{padding:10px 14px;border-left:3px solid var(--crimson);background:rgba(187,74,49,.12);color:#f0c4b6;font-size:14px;border-radius:2px;margin:8px 0;}
+.banner.ok{border-left-color:var(--gold);background:rgba(216,169,78,.10);color:var(--gold-2);}
+.banner.warn{border-left-color:#e9c578;background:rgba(233,197,120,.10);color:var(--gold-2);}
+.loading{display:flex;align-items:center;gap:7px;color:var(--gold-2);font-style:italic;font-size:14px;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:p 1.1s infinite ease-in-out;}
+.dot:nth-child(2){animation-delay:.18s;}.dot:nth-child(3){animation-delay:.36s;}
+@keyframes p{0%,100%{opacity:.25;transform:scale(.7);}50%{opacity:1;transform:scale(1);}}
+.studio{display:grid;grid-template-columns:210px 1fr;gap:14px;}
+.chaplist{background:var(--card);border:1px solid var(--line);border-radius:5px;max-height:55vh;overflow:auto;}
+.chaplist .ci{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;font-size:13px;}
+.chaplist .ci:hover,.chaplist .ci.active{background:var(--card2);color:var(--gold-2);}
+.chaplist .ci small{color:var(--faint);}
+.reader{background:var(--card);border:1px solid var(--line);border-radius:5px;padding:20px 24px;min-height:200px;}
+.reader h2{font-family:'Fraunces',serif;font-weight:600;font-size:23px;color:var(--gold-2);margin:0 0 12px;}
+.reader p{margin:0 0 13px;}
+.cover img{width:100%;max-width:300px;border-radius:5px;border:1px solid var(--line);display:block;margin:0 auto 8px;}
+.statline{font-family:'Fraunces',serif;font-style:italic;color:var(--muted);font-size:14px;margin:4px 0 10px;}
+@media(max-width:680px){.studio{grid-template-columns:1fr;}.chaplist{max-height:26vh;}
 
+/* ===== MOBILE POLISH ===== */
+.wrap{padding:18px 13px 80px;}
+header{margin-bottom:16px;}
+.kicker{font-size:9px;letter-spacing:.28em;}
+h1{font-size:clamp(28px,9vw,40px);}
+header .sub,header p{font-size:13px;}
+/* stack every two-column row */
+.row{flex-direction:column;gap:8px;}
+.row>div{width:100%;}
+/* inputs: 16px prevents iOS focus-zoom; bigger tap height */
+input,textarea,select{font-size:16px;padding:11px 12px;}
+button{min-height:42px;}
+/* tabs: let them wrap and breathe */
+.tabs,.tab-row{flex-wrap:wrap;gap:6px;}
+.tab-btn{padding:8px 12px;font-size:13px;flex:0 0 auto;}
+.tab-pane{padding-top:4px;}
+/* toolbars: buttons go full-ish width, easy to tap */
+.toolbar{gap:8px;}
+.toolbar .btn,.btn{flex:1 1 auto;justify-content:center;text-align:center;}
+/* reader + chapter list stack cleanly */
+.studio{gap:12px;}
+.chaplist{max-height:200px;}
+.reader{padding:14px;font-size:17px;line-height:1.65;}
+.reader h2{font-size:22px;}
+.rbar{flex-wrap:wrap;gap:6px;}
+.rbar .rbtn,.rbtn{flex:1 1 40%;text-align:center;}
+/* panels and cards full width with comfortable padding */
+.panel,.card,.check-panel{padding:14px;}
+/* project selector + its row wrap */
+#projSelect{width:100%;}
+/* license gate fits small screens */
+.gate-card{padding:24px 18px;border-radius:14px;}
+.gate-card h1{font-size:22px;}
+/* score / fix lists readable */
+.ci2{font-size:13px;}
+.mini{font-size:12px;}
+/* guide list taps */
+.guide-ch-header{padding:10px 8px;}
+.use-btn,.rbtn{min-height:38px;}
+/* keep cover image from dominating */
+#coverWrap img{max-width:160px;height:auto;}
+}
+@media(max-width:380px){
+.wrap{padding:14px 10px 76px;}
+h1{font-size:26px;}
+.tab-btn{padding:7px 9px;font-size:12px;}
+.reader{font-size:16px;}
+}
+.cont{background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:4px;padding:8px 12px;margin-bottom:10px;}
+.cont summary{cursor:pointer;font-family:'Fraunces',serif;font-style:italic;color:var(--gold-2);font-size:15px;}
+.rbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line);}
+.nav{color:var(--muted);font-size:13px;}
+.rbtn{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:3px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:'Fraunces',serif;}
+.rbtn:hover{color:var(--gold-2);border-color:var(--gold);}
+.rbtn:disabled{opacity:.35;cursor:not-allowed;}
+.rbtn.danger:hover{color:#fff;background:var(--crimson);border-color:var(--crimson);}
+.rbtn.ok-btn{color:#7bc47b;border-color:#7bc47b;}
+.editbox{width:100%;min-height:300px;font-size:15px;line-height:1.7;}
+.spacer{flex:1;}
+.ck{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;font-style:italic;cursor:pointer;}
+.ck input{width:15px;height:15px;accent-color:var(--gold);}
+.tab-bar{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap;}
+.tab-btn{background:rgba(0,0,0,.3);border:1px solid var(--line);color:var(--muted);border-radius:3px;padding:5px 11px;font-size:12px;cursor:pointer;font-family:'Fraunces',serif;}
+.tab-btn.active{background:rgba(216,169,78,.15);border-color:var(--gold);color:var(--gold-2);}
+.tab-pane{display:none;}.tab-pane.active{display:block;}
+.check-panel{background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:4px;padding:10px 13px;margin:8px 0;}
+.check-panel h4{font-family:'Fraunces',serif;font-style:italic;color:var(--gold-2);margin:0 0 7px;font-size:14px;}
+.ci2{font-size:13px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.ci2.pass{color:#7bc47b;}.ci2.fail{color:#f0c4b6;}.ci2.warn{color:var(--gold-2);}
+.arc-alert{background:rgba(216,169,78,.12);border:1px solid var(--gold);border-radius:4px;padding:12px 15px;margin:8px 0;color:var(--gold-2);font-size:14px;}
+.arc-alert strong{display:block;margin-bottom:4px;font-family:'Fraunces',serif;}
+.vault-entry{font-size:12px;color:var(--faint);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03);}
+.vault-entry span{color:var(--muted);}
+.score-badge{display:inline-block;padding:3px 9px;border-radius:10px;font-size:12px;font-family:'Fraunces',serif;margin-left:8px;}
+.score-high{background:rgba(74,155,111,.2);color:#7bc47b;border:1px solid #4a9b6f;}
+.score-mid{background:rgba(216,169,78,.15);color:var(--gold-2);border:1px solid var(--gold);}
+.score-low{background:rgba(187,74,49,.15);color:#f0c4b6;border:1px solid var(--crimson);}
+.nhist{max-height:130px;overflow:auto;}
+.nentry{font-size:12px;color:var(--faint);padding:3px 0;border-bottom:1px solid rgba(255,255,255,.03);}
+.nentry span{color:var(--muted);}
+.backup-alert{position:fixed;bottom:18px;right:18px;background:var(--card2);border:1px solid var(--gold);border-radius:5px;padding:13px 16px;font-size:13px;color:var(--gold-2);max-width:280px;z-index:999;box-shadow:0 4px 24px rgba(0,0,0,.5);}
+.backup-alert strong{display:block;margin-bottom:5px;font-family:'Fraunces',serif;}
+.guide-panel{background:var(--card);border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:16px;}
+.guide-header{background:rgba(216,169,78,.10);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.guide-header h3{font-family:'Fraunces',serif;font-style:italic;color:var(--gold-2);margin:0;font-size:16px;flex:1;}
+.guide-body{padding:14px 16px;}
+.guide-ch{background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:4px;margin-bottom:8px;overflow:hidden;}
+.guide-ch-header{padding:8px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;background:rgba(216,169,78,.05);}
+.guide-ch-header:hover{background:rgba(216,169,78,.10);}
+.guide-ch-num{font-family:'Fraunces',serif;font-weight:600;color:var(--gold-2);font-size:13px;min-width:55px;}
+.guide-ch-title{color:var(--muted);font-size:13px;flex:1;}
+.guide-ch-done{font-size:11px;padding:2px 7px;border-radius:8px;background:rgba(74,155,111,.2);color:#7bc47b;border:1px solid #4a9b6f;}
+.guide-ch-body{display:none;padding:10px 12px;border-top:1px solid var(--line);}
+.guide-ch-body.open{display:block;}
+.guide-notes{font-size:13px;color:var(--paper);background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:3px;padding:8px 10px;margin-bottom:8px;white-space:pre-wrap;line-height:1.55;}
+.guide-updates{font-size:12px;color:var(--faint);margin-top:4px;white-space:pre-wrap;padding:8px;background:rgba(0,0,0,.2);border-radius:3px;}
+.guide-updates strong{color:var(--gold-2);}
+.guide-arc-label{font-family:'Fraunces',serif;font-style:italic;color:var(--gold);font-size:13px;padding:6px 0 4px;border-bottom:1px solid var(--line);margin-bottom:8px;margin-top:4px;}
+.guide-search{margin-bottom:10px;}
+.use-btn{background:var(--gold);color:#1a1407;border:none;border-radius:3px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:'Fraunces',serif;font-weight:600;}
+.use-btn:hover{background:var(--gold-2);}
+.cost-tag{display:inline-block;font-size:10px;padding:2px 5px;border-radius:6px;background:rgba(187,74,49,.2);color:#f0c4b6;border:1px solid var(--crimson);margin-left:4px;}
+.next-tag{font-size:10px;color:var(--gold);margin-left:4px;}
+.gate-overlay{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#16130d,#241d12);display:flex;align-items:center;justify-content:center;padding:24px}
+.gate-card{max-width:440px;width:100%;background:rgba(20,16,9,.85);border:1px solid var(--line);border-radius:16px;padding:32px 28px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.gate-card h1{font-family:Fraunces,serif;color:var(--gold-2);font-size:26px;margin:0 0 6px}
+.gate-card p{color:var(--muted);font-size:14px;line-height:1.5;margin:0 0 18px}
+.gate-card input{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,.3);color:var(--paper);font-size:15px;letter-spacing:.5px;margin-bottom:12px}
+.gate-card input:focus{outline:none;border-color:var(--gold)}
+.gate-btn{width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#1a1408;font-weight:700;font-size:15px;cursor:pointer}
+.gate-btn:disabled{opacity:.6;cursor:default}
+.gate-msg{margin-top:12px;font-size:13px;min-height:18px}
+.gate-msg.err{color:#e08a8a}.gate-msg.ok{color:var(--gold-2)}
+.gate-buy{margin-top:18px;text-align:center;font-size:13px}
+.gate-buy a{color:var(--gold);text-decoration:none}
+.gate-foot{margin-top:14px;font-size:11px;color:var(--faint);text-align:center;line-height:1.5}
+</style>
+
+<div class="gate-overlay" id="gateOverlay">
+  <div class="gate-card">
+    <h1>Webnovel Studio</h1>
+    <p>Enter your license key to unlock. You'll only need to do this once on this device.</p>
+    <input id="gateKey" type="text" placeholder="XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX" autocomplete="off" spellcheck="false" />
+    <button class="gate-btn" id="gateBtn">Unlock</button>
+    <div class="gate-msg" id="gateMsg"></div>
+    <div class="gate-buy">No key yet? <a id="gateBuyLink" href="#" target="_blank" rel="noopener">Get a license →</a></div>
+    <div class="gate-foot">One key, one writer. Keys are tied to your purchase and can be deactivated if shared.</div>
+  </div>
+</div>
+
+<div class="shelf-overlay" id="shelfOverlay" style="display:none">
+  <div class="shelf-inner">
+    <div class="shelf-head">
+      <h2>My Books</h2>
+      <button class="btn btn-ghost" id="shelfClose">Close</button>
+    </div>
+    <div class="shelf-grid" id="shelfGrid"></div>
+  </div>
+</div>
+<div class="wrap" id="appWrap" style="display:none">
+<header>
+  <div class="kicker">an engine for endless chapters</div>
+  <h1>Webnovel&nbsp;<em>Studio</em> <small style="font-size:13px;color:var(--faint);font-family:'Spectral',serif;font-weight:400">v4</small></h1>
+  <p class="sub">Write 1,000+ chapters with built-in continuity, chapter guide, and automatic memory.</p>
+</header>
+
+<div class="panel">
+  <label class="label" for="projSelect">Project</label>
+  <div class="row" style="align-items:flex-end">
+    <div><select id="projSelect"></select></div>
+    <div style="display:flex;gap:7px">
+      <button class="btn btn-primary" id="bookshelfBtn">📚 My Books</button>
+      <button class="btn btn-ghost" id="newProjTop">+ New</button>
+      <button class="btn btn-ghost" id="renameProj">Edit Name</button>
+      <button class="btn btn-ghost" id="delProj">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="row">
+    <div>
+      <label class="label" for="mode">Engine</label>
+      <select id="mode">
+        <option value="gemini" selected>Gemini — free</option>
+        <option value="groq">Groq — free &amp; fast</option>
+        <option value="deepseek">DeepSeek — free (great prose)</option>
+        <option value="mistral">Mistral — free</option>
+        <option value="hybrid">Claude — best prose</option>
+      </select>
+    </div>
+    <div>
+      <label class="label" for="backendurl">Backend URL</label>
+      <input id="backendurl" placeholder="http://localhost:8787" />
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="setupPanel">
+  <label class="label" for="idea">Your idea</label>
+  <textarea id="idea" rows="3" placeholder="A premise, a character, a what if..."></textarea>
+  <div class="row" style="margin-top:9px">
+    <div><label class="label" for="genre">Genre</label><input id="genre" placeholder="e.g. dark fantasy, occult mystery" /><div id="genreChips" class="chips" style="margin-top:6px"></div></div>
+    <div><label class="label" for="tone">Tone</label><input id="tone" placeholder="e.g. dark, atmospheric, gothic" /></div>
+  </div>
+  <div class="row" style="margin-top:9px">
+    <div><label class="label" for="pov">POV</label>
+      <select id="pov"><option>Third person limited</option><option>First person</option><option>Third person omniscient</option></select></div>
+    <div><label class="label" for="length">Chapter length</label>
+      <select id="length"><option value="1200">Short (~800w)</option><option value="2200" selected>Standard (~1500w)</option><option value="3600">Long (~2500w)</option><option value="5000">Epic (~3400w)</option></select></div>
+    <div><label class="label" for="target">Target chapters</label><input id="target" type="number" min="1" placeholder="e.g. 1000" /></div>
+  </div>
+  <div class="row" style="margin-top:9px">
+    <div><label class="label" for="style">Writing style</label>
+      <select id="style">
+        <option value="web" selected>Web-serial</option>
+        <option value="balanced">Balanced commercial</option>
+        <option value="literary">Literary / dark fiction</option>
+      </select></div>
+    <div style="display:flex;align-items:flex-end">
+      <label class="ck"><input type="checkbox" id="litrpg" /> LitRPG elements</label>
+    </div>
+  </div>
+  <div class="row" style="margin-top:9px">
+    <div><label class="label" for="powerSystem">Power system <span style="font-weight:400;color:var(--faint);font-size:12px">— enforces an accurate progression ladder</span></label>
+      <select id="powerSystem">
+        <option value="none" selected>None / custom</option>
+        <option value="cultivation">Cultivation (Xianxia/Wuxia)</option>
+        <option value="murim">Murim (Martial arts ranks)</option>
+        <option value="hunter">Hunter System (Awakened/Gates)</option>
+      </select></div>
+    <div style="display:flex;align-items:flex-end">
+      <span class="mini" id="powerHint" style="line-height:1.4"></span>
+    </div>
+  </div>
+  <div class="toolbar"><button class="btn btn-primary" id="buildBible">Build the story bible</button></div>
+  <div id="setupStatus"></div>
+</div>
+
+<div class="panel" id="biblePanel" style="display:none">
+  <label class="label" for="bible">Story bible</label>
+  <textarea id="bible" rows="9"></textarea>
+  <div class="toolbar">
+    <button class="btn btn-ghost" id="genTitle">Title ideas</button>
+    <button class="btn btn-ghost" id="genSynopsis">Synopsis</button>
+    <button class="btn btn-ghost" id="genCover">Generate cover</button>
+    <button class="btn btn-ghost" id="dlCover">Download cover (600×800 JPG)</button>
+    <button class="btn btn-ghost" id="uploadCoverBtn">Upload cover</button>
+    <input type="file" id="coverFile" accept="image/*" style="display:none" />
+  </div>
+  <div id="bibleExtra"></div>
+  <div class="cover" id="coverWrap"></div>
+</div>
+
+<div class="panel" id="studioPanel" style="display:none">
+  <div class="statline" id="statline"></div>
+  <div id="arcAlert"></div>
+
+  <details class="cont" open>
+    <summary>Continuity and steering</summary>
+    <div class="tab-bar" style="margin-top:10px">
+      <button class="tab-btn active" data-tab="t-canon">Canon</button>
+      <button class="tab-btn" data-tab="t-chars">Characters</button>
+      <button class="tab-btn" data-tab="t-arcs">Arcs</button>
+      <button class="tab-btn" data-tab="t-tracker">Tracker</button>
+      <button class="tab-btn" data-tab="t-voices">Voices</button>
+      <button class="tab-btn" data-tab="t-glossary">Glossary</button>
+      <button class="tab-btn" data-tab="t-style">Style</button>
+      <button class="tab-btn" data-tab="t-designs">Designs</button>
+      <button class="tab-btn" data-tab="t-vault">Vault</button>
+    </div>
+    <div class="tab-pane active" id="t-canon">
+      <label class="label" for="canon" style="font-size:14px">Canon notes — rules the AI must NEVER contradict</label>
+      <textarea id="canon" rows="5" placeholder="World rules, magic system, permanent facts. Add new rules ONLY when a chapter permanently establishes them."></textarea>
+      <div class="mini">Only add new permanent rules. Never delete existing ones.</div>
+    </div>
+    <div class="tab-pane" id="t-chars">
+      <label class="label" for="cast" style="font-size:14px">Characters — Name | role | status | key facts</label>
+      <textarea id="cast" rows="7" placeholder="Aldous Crane | low-grade Reckoner | alive; erosion beginning | true name Erebus&#10;The voice in No.15 | unknown entity | active | knows Crane's name; mobile"></textarea>
+      <div class="mini">Never delete dead/unaccounted characters — update their status instead.</div>
+    </div>
+    <div class="tab-pane" id="t-arcs">
+      <label class="label" for="goal" style="font-size:14px">Current story goal</label>
+      <input id="goal" placeholder="e.g. Crane investigates No. 15; end Arc 1 with his first real erasure" />
+      <label class="label" for="outline" style="font-size:14px;margin-top:10px">Story arcs — chapters | title | focus</label>
+      <textarea id="outline" rows="5" placeholder="1-40 | The Unaccounted | What is No. 15 and what does it want with Crane?"></textarea>
+      <div class="toolbar"><button class="btn btn-ghost" id="planArcs">Plan arcs automatically</button></div>
+      <div id="planStatus"></div>
+    </div>
+    <div class="tab-pane" id="t-tracker">
+      <label class="label" style="font-size:14px">Series tracker</label>
+      <label class="label" for="erosionLog" style="font-size:13px;margin-top:8px">Erosion / Cost ledger</label>
+      <textarea id="erosionLog" rows="3" placeholder="Ch1 (pre-series): Lost his true name Erebus"></textarea>
+      <label class="label" for="promiseLog" style="font-size:13px;margin-top:8px">Promises / Foreshadowing</label>
+      <textarea id="promiseLog" rows="3" placeholder="[OPEN] Ch1: Pale patch where No.15 number should be"></textarea>
+      <label class="label" for="deathLog" style="font-size:13px;margin-top:8px">Death and state-change log</label>
+      <textarea id="deathLog" rows="3" placeholder="Ch14: The eroded Reckoner — UNACCOUNTED"></textarea>
+      <label class="label" for="openMysteriesLog" style="font-size:13px;margin-top:8px">Open mysteries</label>
+      <textarea id="openMysteriesLog" rows="3" placeholder="[OPEN] What spoke from No.15?"></textarea>
+    </div>
+    <div class="tab-pane" id="t-voices">
+      <label class="label" for="voices" style="font-size:14px">Character voice cards — Name | speech pattern, vocabulary, tics, attitude</label>
+      <textarea id="voices" rows="7" placeholder="Aldous Crane | clipped, precise; bureaucratic metaphors; never raises his voice; dry gallows humor&#10;The voice in No.15 | archaic, coaxing; speaks in second person; never uses contractions"></textarea>
+      <div class="mini">Injected automatically when a character appears, so voices stay distinct over hundreds of chapters.</div>
+      <div class="toolbar" style="margin-top:8px"><button class="btn btn-ghost" id="genVoices">Generate from bible &amp; chapters</button></div>
+      <div id="voiceStatus"></div>
+    </div>
+    <div class="tab-pane" id="t-glossary">
+      <label class="label" for="glossary" style="font-size:14px">Name &amp; term glossary — locked spellings</label>
+      <textarea id="glossary" rows="7" placeholder="Aldous Crane&#10;Erebus&#10;No. 15&#10;the Long Overcast&#10;Reckoner&#10;(one canonical proper noun / term per line — the AI must spell these exactly)"></textarea>
+      <div class="mini">Prevents name drift (Aldous→Aldus, Erebus→Erebos). Fed into every chapter; the deep-scan flags any misspelling.</div>
+      <div class="toolbar" style="margin-top:8px"><button class="btn btn-ghost" id="genGlossary">Extract names from chapters</button></div>
+      <div id="glossaryStatus"></div>
+    </div>
+    <div class="tab-pane" id="t-style">
+      <label class="label" for="styleRef" style="font-size:14px">Style reference — match a prose voice</label>
+      <div class="mini" style="margin-bottom:8px">Paste a sample of prose whose <b>voice and rhythm</b> you want to echo. Use ONLY text you have rights to: <b>your own writing</b>, or <b>public-domain</b> authors (Poe, Lovecraft, Austen, Dickens, etc.). The AI mirrors the style, not the content. Do not paste copyrighted modern novels.</div>
+      <textarea id="styleRef" rows="6" placeholder="Paste 1-3 paragraphs of prose whose voice you want to match (your own work, or public-domain classics)."></textarea>
+      <label class="ck" style="margin-top:10px;display:block"><input type="checkbox" id="humanize" checked /> Natural human voice (reduces AI-tells: cuts clichés, varies rhythm, avoids formulaic phrasing)</label>
+      <div class="mini" style="margin-top:6px">Recommended ON for serialization — polished-but-formulaic prose is what AI detectors flag. This pushes the writing toward a more natural, less templated voice.</div>
+    </div>
+    <div class="tab-pane" id="t-designs">
+      <label class="label" style="font-size:14px">Character designs — see how each character looks</label>
+      <div class="mini" style="margin-bottom:8px">Generates an appearance profile and a portrait for each character in your roster, so you can picture them. Portraits use a free image service (no key needed).</div>
+      <div class="toolbar" style="margin-bottom:8px">
+        <button class="btn btn-ghost" id="designAll">Generate looks for all characters</button>
+      </div>
+      <div id="designStatus"></div>
+      <div id="designGrid" class="design-grid"></div>
+    </div>
+    <div class="tab-pane" id="t-vault">
+      <label class="label" style="font-size:14px">Chapter Vault</label>
+      <div class="mini" style="margin-bottom:8px">Auto-compresses every 10 chapters so the AI remembers your full story at chapter 500+.</div>
+      <div id="vaultDisplay"></div>
+      <div class="toolbar" style="margin-top:8px">
+        <button class="btn btn-ghost" id="compressVault">Compress now</button>
+        <button class="btn btn-ghost" id="clearVault">Clear vault</button>
+      </div>
+      <div id="vaultStatus"></div>
+    </div>
+  </details>
+
+  <div style="margin-top:4px">
+    <label class="label" for="direction" style="font-size:14px">Your notes for the next chapter
+      <span style="font-size:12px;font-weight:400;color:var(--faint);font-style:normal"> — or click "Use these notes" in the Chapter Guide below</span>
+    </label>
+    <textarea id="direction" rows="5" placeholder="List beats IN ORDER. Name ONLY characters who appear. State what NOT to include.&#10;&#10;Example:&#10;ONLY Crane and supervisor appear. NO new characters.&#10;Beat 1: Crane files report.&#10;Beat 2: Supervisor non-reaction — closes drawer.&#10;Beat 3: Crane notices faded logbook ink.&#10;End: Crane realises supervisor was not surprised."></textarea>
+    <div class="mini">The more specific your notes, the more accurately the AI follows them.</div>
+    <div class="row" style="margin-top:9px">
+      <div><label class="label" for="emotion" style="font-size:13px">Emotional tone <span style="font-weight:400;color:var(--faint);font-size:12px">— defaults to Auto: the AI reads the story and picks the right beat itself</span></label>
+        <select id="emotion">
+          <option value="auto" selected>Auto — let the AI decide from the story</option>
+          <option value="dread">Dread / suspense</option>
+          <option value="grief">Grief / loss</option>
+          <option value="triumph">Triumph / catharsis</option>
+          <option value="tension">Tense / high-stakes</option>
+          <option value="tender">Tender / intimate</option>
+          <option value="rage">Anger / vengeance</option>
+          <option value="wonder">Awe / wonder</option>
+          <option value="melancholy">Melancholy / bittersweet</option>
+          <option value="hope">Hope / resolve</option>
+          <option value="dark">Cold / ominous</option>
+        </select></div>
+      <div><label class="label" for="sceneType" style="font-size:13px">Scene type <span style="font-weight:400;color:var(--faint);font-size:12px">— flashbacks won't corrupt your timeline or canon</span></label>
+        <select id="sceneType">
+          <option value="normal" selected>Normal — present, moves forward</option>
+          <option value="flashback">Flashback — a past event</option>
+          <option value="dream">Dream / vision — surreal, not literal</option>
+          <option value="interlude">Interlude — side POV / world moment</option>
+          <option value="timeskip">Time skip — jump forward in time</option>
+        </select></div>
+    </div>
+  </div>
+
+  <details class="cont" style="margin-top:7px">
+    <summary style="font-size:13px">Previous chapter notes</summary>
+    <div class="nhist" id="notesHist"></div>
+  </details>
+
+  <div id="contCheckWrap" style="display:none">
+    <div class="check-panel">
+      <h4>Continuity check</h4>
+      <div id="checkResults"></div>
+    </div>
+  </div>
+  <div id="scoreWrap" style="display:none;margin:6px 0;">
+    <div class="check-panel">
+      <h4>Consistency score <span id="scoreBadge"></span></h4>
+      <div id="scoreDetails" style="font-size:13px;color:var(--muted);margin-top:4px;"></div>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-ghost" id="deepScanBtn" style="font-size:12px;padding:6px 12px">Deep-scan latest vs whole story</button>
+        <select id="deepScanTarget" style="max-width:200px;font-size:12px;padding:6px"></select>
+        <button class="btn btn-ghost" id="auditBtn" style="font-size:12px;padding:6px 12px">Audit whole book</button>
+        <button class="btn btn-ghost" id="aiCheckBtn" style="font-size:12px;padding:6px 12px">Pre-publish check (AI traces)</button>
+      </div>
+      <div id="fixList" style="margin-top:8px"></div>
+      <div id="auditList" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div class="toolbar" style="margin-top:10px">
+    <button class="btn btn-primary" id="writeOne">Write next chapter</button>
+    <button class="btn btn-ghost" id="autoWrite">Auto-write</button>
+    <button class="btn btn-ghost" id="checkContinuity">Check continuity</button>
+    <button class="btn btn-stop" id="stop" style="display:none">Stop</button>
+  </div>
+  <div id="studioStatus"></div>
+
+  <div class="studio" style="margin-top:12px">
+    <div class="chaplist" id="chaplist"></div>
+    <div class="reader" id="reader"><p style="color:var(--faint);font-style:italic">Your chapters will appear here.</p></div>
+    <div class="panel" id="polishPanel" style="display:none;margin-top:12px;border:1px solid var(--gold)">
+      <h4 style="margin:0 0 6px">Polished draft — review before applying <span id="polishCh" style="color:var(--faint);font-weight:400"></span></h4>
+      <div class="mini" style="margin-bottom:8px">A line-edit pass: tighter prose, less filler, sharper opening/closing. Read it, then Apply to replace the chapter or Discard to keep the original. Nothing changes until you Apply.</div>
+      <div id="polishPreview" style="max-height:50vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:10px;background:rgba(0,0,0,.15)"></div>
+      <div class="toolbar" style="margin-top:10px">
+        <button class="btn btn-primary" id="applyPolish">Apply polished version</button>
+        <button class="btn btn-ghost" id="discardPolish">Discard</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toolbar" style="margin-top:12px">
+    <button class="btn btn-ghost" id="exportMd">Export .md</button>
+    <button class="btn btn-ghost" id="exportJson">Save backup .json</button>
+    <button class="btn btn-ghost" id="importBtn">Load backup</button>
+    <button class="btn btn-ghost" id="importChaps">Import published chapters</button>
+    <button class="btn btn-ghost" id="clearChaps">Clear chapters</button>
+    <button class="btn btn-ghost" id="newProj">New project</button>
+    <input id="importFile" type="file" accept="application/json" style="display:none" />
+  </div>
+
+  <div class="panel" id="importPanel" style="display:none;margin-top:12px;border:1px solid var(--gold)">
+    <label class="label">Import published chapters</label>
+    <div class="mini" style="margin-bottom:8px">Paste your already-published chapters below. Separate each with a line containing only <code>===</code> OR start each with a <code>## Chapter N: Title</code> heading. They'll be added in order, replacing the current chapter list. Then it can auto-rebuild recaps + cast so memory catches up.</div>
+    <textarea id="importText" rows="12" placeholder="## Chapter 1: The Tally Begins&#10;Chapter one text here...&#10;&#10;===&#10;&#10;## Chapter 2: No. 15&#10;Chapter two text here...&#10;&#10;===&#10;(or just paste chapters separated by === lines)"></textarea>
+    <div class="row" style="margin-top:8px">
+      <div><label class="label" style="font-size:13px">Start numbering at</label><input id="importStartN" type="number" min="1" value="1" /></div>
+      <div style="display:flex;align-items:flex-end"><label class="ck"><input type="checkbox" id="importRebuild" checked /> Auto-rebuild recaps &amp; cast after import (uses the AI; needed for memory/continuity)</label></div>
+    </div>
+    <div class="toolbar" style="margin-top:10px">
+      <button class="btn btn-primary" id="doImport">Import chapters</button>
+      <button class="btn btn-ghost" id="cancelImport">Cancel</button>
+    </div>
+    <div id="importStatus"></div>
+  </div>
+  <div class="mini">Autosaves in browser. Backup every 20 chapters.</div>
+</div>
+
+<div class="guide-panel" id="guidePanel" style="display:none">
+  <div class="guide-header">
+    <h3>Chapter Guide <span style="font-weight:400;font-size:13px;color:var(--faint)">— optional per-book outline</span></h3>
+    <div style="font-size:12px;color:var(--faint)">Click any chapter to expand. Hit "Use these notes" to auto-fill the notes field above.</div>
+  </div>
+  <div class="guide-body">
+    <div class="guide-search">
+      <input id="guideSearch" placeholder="Search guide..." />
+    </div>
+    <div id="guideList"></div>
+  </div>
+</div>
+</div>
+
+<div class="backup-alert" id="backupReminder" style="display:none">
+  <strong>Time to back up!</strong>
+  20+ chapters since last backup. Save now.
+  <div style="margin-top:8px;display:flex;gap:8px">
+    <button class="btn btn-primary" style="padding:6px 12px;font-size:12px" id="backupNow">Save backup now</button>
+    <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px" id="dismissBackup">Later</button>
+  </div>
+</div>
+<script>
+/* ============================================================
+   LICENSE GATE — Gumroad license-key verification
+   Paste your Gumroad PRODUCT ID (shown under the license-key checkbox) below.
+   ============================================================ */
+const GUMROAD_PRODUCT_ID = "YOUR_PRODUCT_ID_HERE";   // <-- paste the Product ID from Gumroad (shown under the license-key checkbox)
+const GUMROAD_BUY_URL    = "https://gumroad.com/l/hlxvcm";   // your product page (works as-is; or use your full custom URL)
+const LIC_KEY_STORE     = "wns-license-key";
+const LIC_OK_STORE      = "wns-license-ok";
+const OWNER_KEY         = "Marjelyn@Joshua123";   // owner master key — unlocks without Gumroad
+
+function _gate(id){return document.getElementById(id);}
+function showApp(){ _gate("gateOverlay").style.display="none"; _gate("appWrap").style.display=""; }
+function gateMsg(t,cls){ const m=_gate("gateMsg"); m.textContent=t||""; m.className="gate-msg"+(cls?(" "+cls):""); }
+
+async function verifyLicense(key){
+  // Gumroad license verification endpoint (no secret needed; increments uses unless told not to)
+  const body=new URLSearchParams({ product_id: GUMROAD_PRODUCT_ID, license_key: key.trim(), increment_uses_count: "false" });
+  const r=await fetch("https://api.gumroad.com/v2/licenses/verify",{ method:"POST", headers:{ "Content-Type":"application/x-www-form-urlencoded" }, body });
+  const d=await r.json();
+  if(!d || d.success!==true) throw new Error((d&&d.message)||"Invalid license key.");
+  // reject refunded / disputed / cancelled subscriptions
+  const p=d.purchase||{};
+  if(p.refunded || p.chargebacked || p.disputed) throw new Error("This license is no longer active (refunded or disputed).");
+  if(p.subscription_cancelled_at || p.subscription_failed_at) throw new Error("This subscription is no longer active.");
+  return d;
+}
+
+async function doUnlock(){
+  const key=_gate("gateKey").value.trim();
+  if(!key){ gateMsg("Paste your license key first.","err"); return; }
+  _gate("gateBtn").disabled=true; gateMsg("Checking…");
+  if(key===OWNER_KEY){ try{ localStorage.setItem(LIC_KEY_STORE,key); localStorage.setItem(LIC_OK_STORE,"1"); }catch(e){} gateMsg("Welcome back, owner.","ok"); showApp(); return; }
+  try{
+    await verifyLicense(key);
+    try{ localStorage.setItem(LIC_KEY_STORE,key); localStorage.setItem(LIC_OK_STORE,"1"); }catch(e){}
+    gateMsg("Unlocked!","ok");
+    showApp();
+  }catch(e){
+    gateMsg(e.message||"Could not verify that key.","err");
+    _gate("gateBtn").disabled=false;
+  }
+}
+
+async function initGate(){
+  _gate("gateBuyLink").href=GUMROAD_BUY_URL;
+  _gate("gateBtn").addEventListener("click",doUnlock);
+  _gate("gateKey").addEventListener("keydown",e=>{ if(e.key==="Enter")doUnlock(); });
+  // Re-validate a previously stored key (so revoked/refunded keys lose access too).
+  let stored="";
+  try{ stored=localStorage.getItem(LIC_KEY_STORE)||""; }catch(e){}
+  if(stored){
+    if(stored===OWNER_KEY){ showApp(); return; }
+    gateMsg("Verifying your license…");
+    try{ await verifyLicense(stored); showApp(); return; }
+    catch(e){
+      // stored key no longer valid — clear it and require re-entry
+      try{ localStorage.removeItem(LIC_OK_STORE); }catch(_){}
+      gateMsg(e.message||"Your saved license is no longer valid. Please re-enter.","err");
+      _gate("gateKey").value=stored;
+    }
+  }
+}
+initGate();
+
+const TALLY_GUIDE=[
+{n:1,arc:"Arc 1: The Unaccounted",cost:false,notes:`ONLY Crane appears. NO other characters speak or interact.
+Beat 1: Crane walks his nightly count on Caradoc Row, touching iron numbers on each door.
+Beat 2: He finds 21 doors where there have always been 20. The extra house sits at position 15 with no iron number — just a pale patch where one should be.
+Beat 3: He counts again using touch of attention only — never looking directly. The house feels real.
+Beat 4: A voice whispers his forgotten true name "Erebus" from inside. He does not turn. He says: "Note. Do not approach."
+Beat 5: He notices an old woman watching from the house opposite. Her belief has already made No.15 real.
+Beat 6: As he walks away the street begins to forget him — doors blur, iron numbers become indistinct.
+End on: The voice whispers again — "Erebus, we've been waiting."`,
+updates:`After writing — update these:
+CHARACTERS: Add Aldous Crane (alive; erosion beginning; true name Erebus; street began forgetting him Ch1)
+CHARACTERS: Add Old woman Caradoc Row (alive; unwitting; her belief made No.15 real)
+CHARACTERS: Add The voice in No.15 (active; unknown nature; knows Crane's name Erebus; waiting)
+EROSION LEDGER: Pre-series — lost his true name Erebus (paid to forget; name stored not destroyed)
+PROMISES: Pale patch where No.15 number should be [OPEN]
+PROMISES: Crane wants nothing on purpose — framed as cowardice [OPEN]`},
+
+{n:2,arc:"Arc 1: The Unaccounted",cost:false,notes:`ONLY Crane and his supervisor appear. NO new characters.
+Beat 1: Crane retrieves his tally-book from the bureau — he left it there last night.
+Beat 2: He files his incident report about No.15 to his supervisor.
+Beat 3: The supervisor reads it with zero reaction — no alarm, just a slow nod and a drawer closing.
+Beat 4: Crane notices his name in the sign-in logbook is already fading — ink pale where it should be sharp.
+Beat 5: He leaves the bureau.
+End on: Outside, Crane realises the supervisor was not surprised. The bureau already knows about No.15.`,
+updates:`After writing:
+CHARACTERS: Add Crane's supervisor (alive; read report; deliberate non-concern — suspicious)
+EROSION LEDGER: Crane's signature fades from logbook same day Ch2
+PROMISES: Supervisor's non-reaction — he knows something [OPEN]`},
+
+{n:3,arc:"Arc 1: The Unaccounted",cost:false,notes:`ONLY Crane appears on route. The old woman visible but does not interact.
+Beat 1: Crane returns to Caradoc Row the following night for his regular count.
+Beat 2: No.15 is still there. He counts 21 again using only touch of attention.
+Beat 3: A second neighbour mentions No.15 casually as if it has always existed.
+Beat 4: Crane writes 21 in his tally-book.
+End on: The number looks wrong on the page — not because it is incorrect but because it is true.`,
+updates:`After writing:
+CHARACTERS: Add Second neighbour Caradoc Row (alive; believes No.15 has always existed)
+PROMISES: Belief spreading faster than natural — building promise`},
+
+{n:4,arc:"Arc 1: The Unaccounted",cost:false,notes:`ONLY Crane. He is alone in the bureau records room.
+Beat 1: Crane searches the official count for Caradoc Row. Every entry says 20 doors. Always.
+Beat 2: He finds a gap — three nights about forty years ago where no count was recorded for Caradoc Row. No reason given.
+Beat 3: He copies the dates into his tally-book.
+End on: He realises the absence of a record is itself a kind of record.`,
+updates:`After writing:
+TIMELINE: 40 years ago — three nights with no count recorded for Caradoc Row
+PROMISES: Gap in records 40 years ago — MAJOR plant, pays off Ch12 [OPEN]`},
+
+{n:5,arc:"Arc 1: The Unaccounted",cost:false,notes:`ONLY Crane appears.
+Beat 1: Crane signs into the bureau logbook and checks back an hour later.
+Beat 2: His name has faded to near-invisible. He re-signs. It fades again.
+Beat 3: At home he opens his tally-book — entries are sharp, dark, unchanged.
+End on: The tally-book still holds him when nothing else does. It is the only record left that is fully his.`,
+updates:`After writing:
+EROSION LEDGER: Signature fades from logbook repeatedly Ch5
+CANON ADD: Crane's tally-book resists reality drift. Entries he makes anchor small facts.
+PROMISES: Tally-book as last anchor [OPEN] — pays off Ch34`},
+
+{n:6,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane and the eroded Reckoner appear. They do not speak — Crane only observes.
+Beat 1: Crane notices a second Reckoner at the bureau — older, with a route number but no name anyone uses.
+Beat 2: Other Reckoners step around him like furniture. Their eyes slide off without landing.
+Beat 3: Crane watches how people's attention fails to hold the man. He has seen this in buildings. Never in a person.
+Beat 4: The eroded Reckoner looks at Crane with recognition. Says nothing.
+End on: Crane walks home faster than he allows himself to walk.`,
+updates:`After writing:
+CHARACTERS: Add The eroded Reckoner (alive but heavily unaccounted; name unknown; attention slides off him; recognised Crane Ch6)
+KNOWLEDGE: Crane now knows advanced erosion is real and happening to a person`},
+
+{n:7,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane and Tom's wife appear on the street.
+Beat 1: Tom's wife approaches Crane warmly — as if greeting someone she knows. Calls him by a wrong name.
+Beat 2: She mentions No.15 casually and describes three specific false memories of the house — all internally consistent.
+Beat 3: Crane asks who first told her about the house. She cannot say.
+End on: She is not confused or lying. She has a full fabricated history. This is constructed belief — not natural drift.`,
+updates:`After writing:
+CHARACTERS: Update Tom's wife — has full constructed false memories; called Crane by wrong name; cannot trace origin
+PROMISES: False memory is constructed — someone fabricated it deliberately [OPEN]`},
+
+{n:8,arc:"Arc 1: The Unaccounted",cost:false,notes:`ONLY Crane. He is investigating alone.
+Beat 1: Crane traces who Tom's wife first spoke to about No.15. Chain leads through three people.
+Beat 2: At the end is a name from inside the bureau — not a low grade.
+Beat 3: Crane writes the name in his tally-book. Does not go to his supervisor.
+End on: The name implies something about who planted No.15.`,
+updates:`After writing:
+CHARACTERS: Add Bureau insider (unknown grade; at origin of planted belief chain; connected to No.15)
+PROMISES: Bureau insider planted the belief — MAJOR, pays off Arc 2-3 [OPEN]
+MYSTERIES: Which bureau figure planted No.15 and why? [OPEN]`},
+
+{n:9,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane and his supervisor. Brief confrontation in the office.
+Beat 1: Supervisor calls Crane in — not to investigate No.15 but to reassign his route. No explanation.
+Beat 2: Crane refuses. Quietly. For the first time in nineteen years. Just a flat no.
+Beat 3: Supervisor does not push. Notes it and ends the meeting.
+End on: The absence of consequences is more alarming than any punishment. What kind of man does not push back when refused?`,
+updates:`After writing:
+CHARACTERS: Update supervisor — attempted to reassign Crane Ch9; did not press when refused
+MYSTERIES: Why didn't the supervisor push? [OPEN]`},
+
+{n:10,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane and one old retired Reckoner appear.
+Beat 1: Crane asks older Reckoners about struck names — people who paid the Reckoning to have their name removed.
+Beat 2: Most don't remember the question ten minutes after he asks — the topic itself is slack.
+Beat 3: One very old retired Reckoner remembers for a full minute before something smooths over in her face.
+Beat 4: In that minute she gives Crane one specific fragment. Incomplete but specific.
+End on: The fragment. (Should imply names are stored not destroyed.)`,
+updates:`After writing:
+CHARACTERS: Add Old retired Reckoner (alive; briefly remembered struck names; gave one fragment Ch10)
+CANON ADD: Struck names are stored not destroyed. Paying to forget transfers the name to an unknown keeper.
+PROMISES: Her fragment — log exactly what chapter established [OPEN]`},
+
+{n:11,arc:"Arc 1: The Unaccounted",cost:false,notes:`ONLY Crane on his nightly route.
+Beat 1: No.15 now has a smell — wrong, like a room closed for decades but recently heated, with something underneath.
+Beat 2: The neighbouring houses do not smell the same. No one else on the route reacts.
+Beat 3: He tries to write the smell in his tally-book. Takes three attempts.
+End on: The third description. (Let the chapter establish the wording — it will matter later.)`,
+updates:`After writing:
+CHARACTERS: Update No.15 — has distinct smell only Crane detects; log exact description from chapter
+PROMISES: The smell — plant; will identify something later [OPEN]`},
+
+{n:12,arc:"Arc 1: The Unaccounted",cost:false,notes:`ONLY Crane in the bureau records room.
+Beat 1: Crane searches older pre-index hand-written ledgers.
+Beat 2: He finds one entry for Caradoc Row from forty years ago listing 21 doors — struck through in different ink, different hand.
+Beat 3: The correction is dated three days after the original. Matches the gap from Chapter 4 exactly.
+Beat 4: Someone accounted for 21 doors then unaccounted for the extra one.
+End on: This is not the first time. Someone did this forty years ago.`,
+updates:`After writing:
+TIMELINE: 40 years ago — someone filed 21-door count; corrected it 3 days later; dates match Ch4 gap
+PROMISES: MAJOR PLANT — someone did this before [OPEN] pays off Arc 2
+KNOWLEDGE: Crane knows No.15 has appeared before and was deliberately erased`},
+
+{n:13,arc:"Arc 1: The Unaccounted",cost:false,notes:`ONLY Crane. He is alone in a bureau corridor after hours.
+Beat 1: The voice from No.15 speaks to him from the far end of an empty corridor.
+Beat 2: Not his name this time — one different word.
+Beat 3: Crane does not turn. He writes the word in his tally-book the moment he is outside.
+End on: Do NOT reveal the word to the reader. Show only that Crane knows what it means and the knowing costs him something small.`,
+updates:`After writing:
+CHARACTERS: Update the voice — can operate outside No.15; spoke in bureau corridor Ch13
+CANON ADD: The voice in No.15 is not confined to that location. It can reach Crane elsewhere.
+MYSTERIES: What word did the voice say? Crane knows; withhold from reader until mid-arc [OPEN]`},
+
+{n:14,arc:"Arc 1: The Unaccounted",cost:false,notes:`ONLY Crane at the bureau discovering a disappearance.
+Beat 1: The eroded Reckoner from Ch6 does not appear for his route.
+Beat 2: Crane checks the duty roster — the man's name is not there. Not absent. Simply not there.
+Beat 3: No death report. Route not reassigned.
+Beat 4: Crane asks colleagues and supervisor about the man — blank faces, smooth eyes.
+End on: Crane is the only one who remembers him. And by chapter's end he is struggling to hold the man's face in his mind.`,
+updates:`After writing:
+CHARACTERS: Update eroded Reckoner — UNACCOUNTED; disappeared Ch14; no death report; bureau has no record
+DEATH LOG: Eroded Reckoner — UNACCOUNTED Ch14; no witnesses; no body
+EROSION LEDGER: Crane's memory of the eroded Reckoner fading — new symptom Ch14`},
+
+{n:15,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane and one bureau clerk (unnamed, minor).
+Beat 1: Crane tells one bureau clerk a small false fact about himself — different route number, different year of joining.
+Beat 2: The clerk repeats it to a colleague within the hour as established fact.
+Beat 3: By evening the false information has moved two more steps through the bureau.
+Beat 4: Crane writes this in his tally-book without emotion and goes home.
+End on: He is becoming malleable. Others' beliefs about him take hold and spread.`,
+updates:`After writing:
+CHARACTERS: Update Crane — erosion advanced; identity malleable to suggestion; others' false beliefs spread
+CANON ADD: Advanced erosion makes a person malleable. Others' false beliefs about them take hold and spread.
+EROSION LEDGER: Crane's identity malleable to suggestion Ch15`},
+
+{n:16,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane observes from across the street. No direct interaction.
+Beat 1: Tom's wife has told a third, fourth, and fifth person. Crane counts them from across the street.
+Beat 2: Each person accepts the house without question.
+Beat 3: No.15 brickwork is more detailed than Ch1 — mortar sharper, window glass reflects properly.
+Beat 4: Crane notes in his tally-book: the house is gaining resolution.
+End on: If enough people believe, the official record will be overwritten completely.`,
+updates:`After writing:
+CHARACTERS: Update No.15 — brickwork fully detailed; belief circle 5+ people; gaining reality through consensus
+PROMISES: Crowd belief rewriting reality — mid-scale; mark progress`},
+
+{n:17,arc:"Arc 1: The Unaccounted",cost:false,notes:`ONLY Crane at the bureau.
+Beat 1: Crane checks his name on the duty roster. It is there but the spacing is wrong — as if added into a gap.
+Beat 2: He checks last week's roster copy in his tally-book. His name is in a different position than the current version.
+Beat 3: Crane adds his name back in fresh handwriting to a clean line.
+Beat 4: By next morning that line is in the correct position — his tally-book entry pushed back.
+End on: The tally-book can push back against reality drift. Not much. But something.`,
+updates:`After writing:
+EROSION LEDGER: Name shifting on official rosters Ch17
+CANON ADD: Crane's tally-book entries can push back against reality drift in small ways.
+PROMISES: Tally-book can push back — MAJOR plant; central to Arc 1 climax [OPEN]`},
+
+{n:18,arc:"Arc 1: The Unaccounted",cost:true,notes:`ONLY Crane. THIS IS A COST CHAPTER.
+Beat 1: Crane stands outside No.15 on his count.
+Beat 2: He makes a deliberate choice — he looks at the door directly. A full sustained look. Not touch of attention.
+Beat 3: The cost arrives immediately. Not pain — an absence. Something he had this morning is simply not there. He cannot name it because the name went with it.
+End on: Him standing in the street with a gap where something used to be, unable to say what.
+
+COST NOTE: Decide what he loses BEFORE writing. Suggestion: the memory of his first morning as a Reckoner — the specific sensory detail of it. Log it precisely in the Erosion Ledger.`,
+updates:`After writing:
+EROSION LEDGER: COST — lost [what chapter established];
+// Per-project guide: only the original Tally book uses the built-in outline. New books start empty.
+function activeGuide(){
+  if(Array.isArray(proj.guide) && proj.guide.length) return proj.guide;
+  // legacy: the Tally project (detect by its signature bible) keeps the built-in guide
+  if((proj.bible||"").includes("Caradoc Row") || (proj.bible||"").includes("the Long Overcast") || (proj.title||"").toLowerCase().includes("tally")) return TALLY_GUIDE;
+  return [];
+} Ch18; triggered by looking directly at No.15
+PROMISES: First real cost — Arc 1 promise from Ch1 PAID; mark as paid
+CHARACTERS: Update Crane — first deliberate cost paid Ch18`},
+
+{n:19,arc:"Arc 1: The Unaccounted",cost:false,notes:`ONLY Crane.
+Beat 1: Consequence of looking in Ch18 — something in No.15 looked back. Not the voice. Something older and slower.
+Beat 2: It has no interest in Crane specifically. Only in the fact of having been seen.
+Beat 3: Crane feels watched for the first time in nineteen years of walking routes. The sensation is patient, not threatening.
+End on: He checks whether his shadow is the right length. It is. This does not reassure him.`,
+updates:`After writing:
+CHARACTERS: Update No.15 — contains TWO distinct presences: the voice (personal) and an older entity (impersonal, patient)
+CANON ADD: No.15 contains at least two presences: the voice (knows Crane) and an older entity (impersonal, patient).
+MYSTERIES: What is the older entity in No.15? [OPEN]`},
+
+{n:20,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane and his landlord appear briefly.
+Beat 1: Crane's landlord of eleven years does not recognise him at the door. Crane has to give his name and room number.
+Beat 2: The landlord accepts this without embarrassment — as if meeting a new lodger.
+Beat 3: Crane's belongings are undisturbed. His name is still in the rent ledger. The ledger holds him but the man does not.
+Beat 4: Crane opens his tally-book and reads his own entries until the room feels like his again.
+End on: What entry he reads and why that specific one.`,
+updates:`After writing:
+EROSION LEDGER: Landlord no longer recognises Crane by sight Ch20
+CHARACTERS: Update Crane — landlord doesn't recognise him; using tally-book as anchor`},
+
+{n:21,arc:"Arc 1: The Unaccounted",cost:false,notes:`ONLY Crane piecing together research.
+Beat 1: Using the retired Reckoner's fragment (Ch10) and his own research, Crane works out what struck names actually are.
+Beat 2: Not deleted. Not destroyed. Transferred — held somewhere outside the person.
+Beat 3: He did not pay to forget his name. He paid to give it away. Something accepted the trade.
+End on: Somewhere his name still exists and is being kept. And the voice spoke it — because it knows where.`,
+updates:`After writing:
+CHARACTERS: Update Crane — knows his name is stored not destroyed; knows the voice knows where
+MYSTERIES: Update Mystery 2 — name is stored; voice knows where; Crane knows this now`},
+
+{n:22,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane observes from a distance. A senior Reckoner appears.
+Beat 1: The bureau sends a senior Reckoner to handle No.15 officially.
+Beat 2: Crane watches from a distance. The senior uses a formal method Crane has never seen — specific language, an unknown tool.
+Beat 3: It does not work. No.15 does not yield.
+Beat 4: The senior leaves without filing a report, without acknowledging Crane, without acknowledging the failure.
+End on: The senior did not look surprised. He knew the method would fail.`,
+updates:`After writing:
+CHARACTERS: Add Senior Reckoner (alive; higher grade; used unknown method Ch22; failed; not surprised)
+CANON ADD: Higher grades of the Reckoning exist above what low-grade Reckoners are told.
+PROMISES: Senior knew the method would fail [OPEN]`},
+
+{n:23,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane and a bureau clerk (background only).
+Beat 1: The senior Reckoner files his report — No.15 does not exist, matter resolved, count confirmed at 20 doors.
+Beat 2: Crane reads the filed report in the records room.
+Beat 3: He has his tally-book with every count since Ch1. The official record is a lie and he holds proof.
+Beat 4: He decides what to do with the proof. He chooses to do nothing — for now.
+End on: He examines why that choice felt easy.`,
+updates:`After writing:
+CHARACTERS: Update senior Reckoner — filed false report Ch23; Crane has evidence
+PROMISES: Senior's false report — plant toward Ch35 payoff [OPEN]
+MYSTERIES: Why did senior file a false report? Who instructed this? [OPEN]`},
+
+{n:24,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane and a new ally character — their introduction.
+Beat 1: Introduce someone outside the Reckoning entirely. Establish their occupation through one specific detail.
+Beat 2: They see Crane without the eye-slide. Greet him by name without prompting. Ask a direct question and wait for the answer.
+Beat 3: Crane does not understand why they are immune to his erosion. Do not explain it to the reader yet.
+Beat 4: The ally notices something is wrong and asks.
+End on: Crane has no way to answer that is both true and safe. He says nothing. The ally waits anyway.`,
+updates:`After writing:
+CHARACTERS: Add The ally (alive; outside Reckoning; immune to erosion — reason unknown; noticed something wrong Ch24; log occupation)
+PROMISES: Why is the ally immune? [OPEN] — answer in Arc 2
+MYSTERIES: Why can the ally see Crane clearly? [OPEN]`},
+
+{n:25,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane alone on Caradoc Row. The voice speaks but is not seen.
+Beat 1: The voice makes a direct offer: speak Crane's full name aloud if he enters No.15.
+Beat 2: Crane refuses out loud on the empty street. It feels foolish to speak to a house.
+Beat 3: The voice does not argue. Says only the offer will remain open.
+End on: Halfway home he realises he wants to go back. This is the first time in nineteen years he has wanted something specific.`,
+updates:`After writing:
+CHARACTERS: Update the voice — made direct offer Ch25; offer remains open; patient; does not pressure
+PROMISES: The offer — plant; Crane will accept in Ch28 [OPEN]
+PROMISES: Crane's wanting — Ch1 cowardice promise being tested; mark progress`},
+
+{n:26,arc:"Arc 1: The Unaccounted",cost:false,notes:`ONLY Crane researching old bureau documents.
+Beat 1: Crane finds references to a grade above the senior grade — no name, only a symbol in margins of three documents across different decades.
+Beat 2: The official org chart he was issued stops two grades below this symbol.
+Beat 3: Someone decided low grades should not know the full structure.
+Beat 4: Crane draws the symbol in his tally-book.
+End on: He recognises the symbol also appears on the tool the senior Reckoner used in Ch22.`,
+updates:`After writing:
+CANON ADD: A hidden grade exists above the senior grade, identified only by a symbol.
+PROMISES: Hidden grade and the symbol — plant toward Arc 3 payoff [OPEN]`},
+
+{n:27,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane and a longtime neighbour on Caradoc Row.
+Beat 1: A woman who has greeted Crane by name every night for nine years has no memory of him.
+Beat 2: Crane tests it — references specific shared memories. She is polite but blank.
+Beat 3: Nineteen years of nightly presence. Gone from one witness.
+Beat 4: He opens his tally-book at home. Every entry still sharp. The record exists but the memory does not.
+End on: Which one is more real — the record or the person's memory?`,
+updates:`After writing:
+EROSION LEDGER: 19 years of route presence erased from longtime witness Ch27
+PROMISES: Tally-book as last true record — approaching payoff at Ch34`},
+
+{n:28,arc:"Arc 1: The Unaccounted",cost:true,notes:`ONLY Crane. MAJOR TURNING POINT — he enters No.15.
+Beat 1: Crane has reasoned a method — moving through the unaccounted as if it is already accounted for. Neither confirming nor denying.
+Beat 2: He enters No.15. The method costs him something at the threshold immediately — taken, not offered.
+Beat 3: Inside, the layout is wrong — proportions slightly large, as if built for someone who expected more from rooms.
+End on: He is inside the unaccounted. This is the point of no return.
+
+COST NOTE: Decide what is taken at the threshold BEFORE writing. Suggestion: the sound of his mother's voice — the specific sound, not the memory she existed. Log precisely.`,
+updates:`After writing:
+EROSION LEDGER: COST — threshold of No.15 took [what chapter established] without consent Ch28
+DEATH LOG: Crane has entered the unaccounted — status changed
+PROMISES: Crane forced to break do not approach — Arc 1 promise PAID; mark paid`},
+
+{n:29,arc:"Arc 1: The Unaccounted",cost:false,notes:`ONLY Crane inside No.15. Describe through wrongness only — do not show the voice yet.
+Beat 1: A fireplace with old ash but never lit.
+Beat 2: A chair sized for someone taller.
+Beat 3: A window showing a street that is almost Caradoc Row — but one building is different.
+Beat 4: The smell from Ch11 is stronger here and seems to come from the walls.
+Beat 5: Crane moves through using his method, noting everything in his tally-book.
+End on: One detail that should not be familiar but is.`,
+updates:`After writing:
+CHARACTERS: Update No.15 interior — log all physical details established; must stay consistent in future chapters`},
+
+{n:30,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane and the voice inside No.15.
+Beat 1: The voice has a form. Show ONLY ONE physical detail — something that should not be familiar but is.
+Beat 2: Crane recognises something about it without being able to name the recognition.
+Beat 3: The detail implies history — as if this form belongs to someone from before he gave his name away.
+Beat 4: Crane writes the one detail in his tally-book. The ink holds.
+End on: The recognition costs him nothing. That is the most frightening thing.`,
+updates:`After writing:
+CHARACTERS: Update the voice — has a form; log the one detail from the chapter; withhold full reveal
+MYSTERIES: Update Mystery 3 — partial; form seen but not explained`},
+
+{n:31,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane and the voice inside No.15.
+Beat 1: Crane learns a fragment of his true name — not the full thing. Just enough to feel its shape.
+Beat 2: Like knowing the size of a room from the echo before you enter — not the name, only the impression of how large it is.
+Beat 3: The fragment does not restore anything. It only shows what is missing and how large the absence is.
+End on: What the shape of the name feels like. What it implies about who he was before he gave it away.`,
+updates:`After writing:
+EROSION LEDGER: Crane perceived shape of name — not restored, only outlined Ch31
+MYSTERIES: Update Mystery 2 — partial progress; name shape known, not content`},
+
+{n:32,arc:"Arc 1: The Unaccounted",cost:true,notes:`Crane leaving No.15. THIS IS A COST CHAPTER.
+Beat 1: Getting out costs Crane something he did not offer — a specific memory taken without trade, without warning.
+Beat 2: He does not know it is gone until he reaches for it outside and finds the gap.
+Beat 3: He tries to remember what the gap was. He cannot. That is the precise shape of the theft.
+End on: The gap. Not described — shown through what he tries to reach for and can no longer find.
+
+COST NOTE: Decide the specific memory BEFORE writing. Log it precisely.`,
+updates:`After writing:
+EROSION LEDGER: COST — No.15 took [specific memory] without consent Ch32; log exactly what
+PROMISES: No.15 takes without asking — plant; it will do this again [OPEN]`},
+
+{n:33,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane and his ally from Ch24.
+Beat 1: Crane surfaces to the normal city.
+Beat 2: The ally is the only person who reacts to him as a known quantity without prompting.
+Beat 3: The ally notices something has changed in Crane — something physical. Does not ask about it directly.
+End on: What the ally does instead of asking. (Something specific to their character from Ch24.)`,
+updates:`After writing:
+CHARACTERS: Update ally — noticed Crane's change after No.15; did not press; relationship deepening`},
+
+{n:34,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane and his supervisor at the bureau.
+Beat 1: Crane goes to report what he found inside No.15.
+Beat 2: Supervisor has no record of him being assigned to Caradoc Row. The logbook shows a different Reckoner on that route for six months.
+Beat 3: Crane opens his tally-book to show the entries. His supervisor sees blank pages.
+Beat 4: Crane looks down — he sees his entries, sharp and complete. The tally-book is now only readable by Crane.
+End on: It still holds him — but only for him.`,
+updates:`After writing:
+EROSION LEDGER: Tally-book now blank to others; only Crane can read it Ch34
+PROMISES: Tally-book as anchor — PAYOFF; mark partially paid`},
+
+{n:35,arc:"Arc 1: The Unaccounted",cost:false,notes:`ONLY Crane in the sealed bureau archive.
+Beat 1: Crane breaks into the bureau's sealed archive.
+Beat 2: He finds the real org chart and records of the hidden grade.
+Beat 3: The upper grades do not maintain reality — they harvest what goes slack. The bureau is farming the city not protecting it.
+Beat 4: One specific piece of evidence too clear to misread.
+End on: The evidence. Let the chapter establish exactly what it says.`,
+updates:`After writing:
+CANON ADD: Upper grades of the Reckoning harvest the slack, not just maintain reality.
+MYSTERIES: Update Mystery 4 — Reckoning's true purpose; PARTIAL REVEAL Ch35
+PROMISES: First glimpse of the Reckoning's secret — building; mark progress`},
+
+{n:36,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane observes from a distance. No direct interaction.
+Beat 1: Tom's wife has told enough people that No.15 has a complete social history — decades of neighbours, a family name, a specific incident fifteen years ago that four people remember.
+Beat 2: The official record is nearly overwritten.
+Beat 3: Crane's original tally-book entry for a 20-door street is the last accurate record anywhere.
+End on: He understands what it means to be the only record. If he is unaccounted, the truth goes with him.`,
+updates:`After writing:
+CHARACTERS: Update No.15 — nearly fully real by consensus; one accurate record remains (Crane's tally-book)
+PROMISES: Crowd belief rewriting reality — at full scale; Ch1 promise built and delivered`},
+
+{n:37,arc:"Arc 1: The Unaccounted",cost:false,notes:`ONLY Crane reaching a conclusion.
+Beat 1: Crane realises No.15 was planted deliberately. The belief chain was seeded. The memories were installed. The timing was precise.
+Beat 2: Someone controls the slack well enough to architect a building from consensus.
+Beat 3: This means someone planted No.15 knowing it would summon Crane specifically. Knowing what it would cost him.
+End on: The question of who. And why him.`,
+updates:`After writing:
+MYSTERIES: Who planted No.15 and why specifically Crane? MAJOR open question for Arc 2 [OPEN]
+PROMISES: No.15 was planted — major Arc 2 promise [OPEN]`},
+
+{n:38,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane and the voice — not on Caradoc Row, somewhere else entirely.
+Beat 1: The voice contacts Crane in a completely different location — not Caradoc Row.
+Beat 2: It speaks the name fragment from Ch31 — just the shape of it — and waits.
+Beat 3: Crane does not run. He asks it one question.
+End on: The voice's answer — without explaining what Crane asked. The reader hears the answer without the question.`,
+updates:`After writing:
+CHARACTERS: Update the voice — now mobile and following Crane; no longer contained to No.15
+MYSTERIES: Update Mystery 3 — escalated; voice attached to Crane outside No.15`},
+
+{n:39,arc:"Arc 1: The Unaccounted",cost:true,notes:`ONLY Crane. He makes his choice. THIS IS A COST CHAPTER.
+Beat 1: Crane decides whether to bring what he knows to the upper grades or act alone.
+Beat 2: He chooses alone. He has his tally-book, his method, and the one thing the bureau cannot account for — a man they have already half-erased.
+Beat 3: Making the choice costs him something — not the slack taking it, but him deliberately giving it up. His first voluntary sacrifice.
+End on: What he chose to give and why that particular thing. He understands: the price is not always taken. Sometimes you learn to offer it.
+
+COST NOTE: Decide the voluntary sacrifice BEFORE writing. It should be something he has been holding onto. Log it.`,
+updates:`After writing:
+EROSION LEDGER: COST — first deliberate sacrifice; Crane chose the cost; [what chapter established] Ch39
+KNOWLEDGE: Crane now understands the price can be chosen not just taken`},
+
+{n:40,arc:"Arc 1: The Unaccounted",cost:false,notes:`Crane on Caradoc Row. A figure from the hidden grade watches from a distance — does not approach.
+Beat 1: Crane seals No.15 using a method he deduced himself — writing it into his tally-book as an accounting, claiming it as real on his own terms.
+Beat 2: The house goes quiet but does not disappear. It is accounted for now — which means real — which means it can be dealt with later.
+Beat 3: His name is now half-gone from the official record.
+Beat 4: The voice is still present — quieter, but there.
+Beat 5: A figure watches from the far end of the street. Their coat bears the symbol from Ch26. They do not follow. They simply watch.
+End on: The figure turns away first. They were not threatened. They were interested.
+
+ARC 1 COMPLETE after this chapter.`,
+updates:`After writing:
+EROSION LEDGER: Name half-gone from official record Ch40
+CHARACTERS: Add The watcher (alive; hidden grade; observed Crane seal No.15; interested not threatened Ch40)
+PROMISES: First glimpse of Reckoning secret — Arc 1 promise PAID; mark paid
+ARC MAP: Arc 1 COMPLETE
+Update Current story goal in Arcs tab to Arc 2 goal
+Update Story arcs to mark Arc 1 complete`}
+];
+
+let proj=newProject(),busy=false,stopFlag=false,activeChapter=-1,editing=false;
+function newProject(){return{setup:{},title:"Untitled",bible:"",chapters:[],beats:[],cover:"",canon:"",goal:"",cast:"",outline:"",erosionLog:"",promiseLog:"",deathLog:"",openMysteriesLog:"",notesHistory:[],vault:[],lastBackupAt:0,completedGuideChapters:[],voices:"",glossary:"",phrases:[],designs:{},guide:[],styleRef:"",humanize:true};}
+function backendBase(){return(document.getElementById("backendurl").value||"").trim().replace(/\/+$/,"");}
+function provider(){const v=document.getElementById("mode").value;return v==="hybrid"?"claude":v;}
+function isRateLimit(m){return /quota|exceed|rate|429|RESOURCE_EXHAUSTED|limit: 0/i.test(m||"");}
+async function callStory(system,prompt,maxTokens){const base=backendBase();if(!base)throw new Error("Set Backend URL first.");const r=await fetch(base+"/story",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system,prompt,provider:provider(),maxTokens})});let d;try{d=await r.json();}catch{throw new Error("Backend did not return JSON.");}if(!r.ok||(d&&d.error))throw new Error((d&&d.error)||("Backend error HTTP "+r.status));if(!d||typeof d.text!=="string"||!d.text.trim())throw new Error("Empty response from model.");return d.text.trim();}
+function esc(s){return(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function mdToHtml(t){return(t||"").split(/\n{2,}/).map(b=>{const s=b.trim();if(/^#{1,3}\s+/.test(s))return`<h2>${esc(s.replace(/^#{1,3}\s+/,""))}</h2>`;return`<p>${esc(s).replace(/\n/g,"<br>").replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")}</p>`;}).join("");}
+function setStatus(id,html){const el=document.getElementById(id);if(el)el.innerHTML=html;}
+function loadingHtml(t){return`<div class="loading"><span class="dot"></span><span class="dot"></span><span class="dot"></span><em>${esc(t)}</em></div>`;}
+function wc(t){return t&&t.trim()?t.trim().split(/\s+/).length:0;}
+const IDX="wns-projects",CUR="wns-current";let curId=null;
+function newId(){return"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function getIndex(){try{return JSON.parse(localStorage.getItem(IDX))||[];}catch{return[];}}
+function setIndex(l){try{localStorage.setItem(IDX,JSON.stringify(l));}catch{}}
+function projLabel(p){return(p&&(p.name||p.title))||"Untitled";}
+function syncTracker(){proj.erosionLog=document.getElementById("erosionLog").value;proj.promiseLog=document.getElementById("promiseLog").value;proj.deathLog=document.getElementById("deathLog").value;proj.openMysteriesLog=document.getElementById("openMysteriesLog").value;}
+function save(){if(!curId)curId=newId();syncTracker();try{localStorage.setItem("wns-proj-"+curId,JSON.stringify(proj));}catch(e){}const list=getIndex();const i=list.findIndex(x=>x.id===curId);const entry={id:curId,title:projLabel(proj),cover:proj.cover||"",chapters:(proj.chapters||[]).length,genre:(proj.setup&&proj.setup.genre)||"",updated:Date.now()};if(i>=0)list[i]=entry;else list.push(entry);setIndex(list);try{localStorage.setItem(CUR,curId);}catch{}}
+function loadProject(id){try{const s=localStorage.getItem("wns-proj-"+id);if(s){proj={...newProject(),...JSON.parse(s)};curId=id;localStorage.setItem(CUR,id);return true;}}catch(e){}return false;}
+function load(){let list=getIndex();if(list.length===0){let legacy=null;try{legacy=JSON.parse(localStorage.getItem("webnovel-studio-project-v1"));}catch{}if(legacy&&(legacy.bible||(legacy.chapters&&legacy.chapters.length))){curId=newId();proj={...newProject(),...legacy};try{localStorage.setItem("wns-proj-"+curId,JSON.stringify(proj));}catch{}list=[{id:curId,title:projLabel(proj)}];setIndex(list);try{localStorage.setItem(CUR,curId);}catch{}return true;}return false;}const want=localStorage.getItem(CUR);const id=(want&&list.some(x=>x.id===want))?want:list[0].id;return loadProject(id);}
+function refreshProjectBar(){const sel=document.getElementById("projSelect");if(!sel)return;const list=getIndex();sel.innerHTML=list.map(x=>`<option value="${esc(x.id)}" ${x.id===curId?"selected":""}>${esc(x.title||"Untitled")}</option>`).join("")||`<option>No projects</option>`;}
+function blankUI(){["idea","genre","tone","target","bible","direction","canon","goal","cast","outline","erosionLog","promiseLog","deathLog","openMysteriesLog"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});const be=document.getElementById("bibleExtra");if(be)be.innerHTML="";["biblePanel","studioPanel","guidePanel"].forEach(id=>document.getElementById(id).style.display="none");}
+function openShelf(){
+  save();
+  const list=getIndex().slice().sort((a,b)=>(b.updated||0)-(a.updated||0));
+  const grid=document.getElementById("shelfGrid");
+  const cards=list.map(x=>{
+    const cover=x.cover
+      ? `<img class="book-cover" src="${esc(x.cover)}" alt="cover" referrerpolicy="no-referrer"/>`
+      : `<div class="book-cover placeholder">${esc((x.title||"U").trim().charAt(0).toUpperCase())}</div>`;
+    const sub=`${x.chapters||0} chapter${(x.chapters===1)?"":"s"}${x.genre?" · "+esc(x.genre):""}`;
+    return `<div class="book ${x.id===curId?"current":""}" data-open="${esc(x.id)}">
+      ${cover}
+      <div class="book-meta"><div class="book-title">${esc(x.title||"Untitled")}</div><div class="book-sub">${sub}</div></div>
+    </div>`;
+  }).join("");
+  grid.innerHTML = cards + `<div class="book-new" data-newbook>+ New book</div>`;
+  document.getElementById("shelfOverlay").style.display="block";
+}
+function closeShelf(){document.getElementById("shelfOverlay").style.display="none";}
+function switchProject(id){if(id===curId)return;save();if(loadProject(id)){blankUI();hydrate();refreshProjectBar();}}
+function createProject(){save();proj=newProject();curId=newId();blankUI();save();refreshProjectBar();}
+function renameProject(){const n=prompt("Name:",projLabel(proj));if(n==null)return;proj.name=n.trim()||proj.title||"Untitled";save();refreshProjectBar();}
+function deleteProject(){const list=getIndex();if(list.length<=1){if(!confirm("Delete this project?"))return;}else if(!confirm(`Delete "${projLabel(proj)}"?`))return;try{localStorage.removeItem("wns-proj-"+curId);}catch{}const rest=getIndex().filter(x=>x.id!==curId);setIndex(rest);if(rest.length){loadProject(rest[0].id);blankUI();hydrate();}else{proj=newProject();curId=newId();blankUI();save();}refreshProjectBar();}
+function readSetup(){proj.setup={idea:document.getElementById("idea").value.trim(),genre:document.getElementById("genre").value.trim(),tone:document.getElementById("tone").value.trim(),pov:document.getElementById("pov").value,length:parseInt(document.getElementById("length").value,10),target:parseInt(document.getElementById("target").value,10)||0,style:document.getElementById("style").value,litrpg:document.getElementById("litrpg").checked,powerSystem:document.getElementById("powerSystem").value};}
+async function buildBible(){if(busy)return;readSetup();if(!proj.setup.idea){setStatus("setupStatus",`<div class="banner">Type an idea first.</div>`);return;}busy=true;setStatus("setupStatus",loadingHtml("architecting your story..."));document.getElementById("buildBible").disabled=true;try{const sys="You are a master novelist and story architect. Design original vivid internally consistent worlds. Output clean markdown. No preamble.";const p=`Design the foundation for a long-running ${proj.setup.genre||"novel"} (tone: ${proj.setup.tone||"engaging"}). From this idea:\n\n"${proj.setup.idea}"\n\n${powerSystemGuide()}${genreGuide()}\nProvide in markdown:\n# Story Title\nLogline — one line.\n## World — setting, rules, atmosphere.\n## Main Characters — 3-5 each with name, role, want, flaw.\n## The Long Arc — macro journey across hundreds of chapters.\n## Tone and Style — prose voice, what to never do stylistically.`;const text=await callStory(sys,p,1500);proj.bible=text;const m=text.match(/^#\s+(.+)$/m);proj.title=m?m[1].trim():"Untitled";document.getElementById("bible").value=text;["biblePanel","studioPanel","guidePanel"].forEach(id=>document.getElementById(id).style.display="block");setStatus("setupStatus",`<div class="banner ok">Bible ready. Fill Canon, Characters, and Story arcs. Then use the Chapter Guide below.</div>`);renderStudio();renderGuide();save();}catch(e){setStatus("setupStatus",`<div class="banner">${esc(e.message)}</div>`);}busy=false;document.getElementById("buildBible").disabled=false;}
+function parseOutline(t){return(t||"").split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const parts=l.split("|").map(s=>s.trim());const rng=(parts[0]||"").match(/(\d+)\s*[-]\s*(\d+)/);if(!rng)return null;return{start:+rng[1],end:+rng[2],title:parts[1]||"",focus:parts[2]||""};}).filter(Boolean);}
+function currentArc(n){const arcs=parseOutline(document.getElementById("outline").value);if(!arcs.length)return null;return arcs.find(x=>n>=x.start&&n<=x.end)||(n>arcs[arcs.length-1].end?arcs[arcs.length-1]:null);}
+function checkArcTransition(){const n=proj.chapters.length;if(!n)return;const arcs=parseOutline(document.getElementById("outline").value);if(!arcs.length)return;const done=arcs.find(x=>n===x.end);const el=document.getElementById("arcAlert");if(done){el.innerHTML=`<div class="arc-alert"><strong>Arc complete: "${done.title}"</strong>Before writing Chapter ${n+1}: 1) Update Current story goal 2) Confirm next arc in Story arcs 3) Add any new permanent rules to Canon notes</div>`;}else el.innerHTML="";}
+async function planArcs(){if(busy)return;proj.bible=document.getElementById("bible").value;if(!proj.bible.trim()){setStatus("planStatus",`<div class="banner">Build story bible first.</div>`);return;}busy=true;document.getElementById("planArcs").disabled=true;setStatus("planStatus",loadingHtml("mapping the arcs..."));try{const target=(proj.setup&&proj.setup.target)||100;const sys="You are a story architect. Output ONLY the requested lines nothing else.";const p=`Divide this novel into major story arcs spanning chapters 1 to ${target}. Use 6-12 arcs. Output ONLY lines in EXACTLY this format:\nstart-end | Arc Title | one-sentence focus\n\nSTORY BIBLE:\n${proj.bible}`;const out=await callStory(sys,p,900);const cleaned=out.split("\n").filter(l=>/\d+\s*[-]\s*\d+\s*\|/.test(l)).join("\n")||out;document.getElementById("outline").value=cleaned;proj.outline=cleaned;save();setStatus("planStatus",`<div class="banner ok">Arc plan ready.</div>`);}catch(e){setStatus("planStatus",`<div class="banner">${esc(e.message)}</div>`);}busy=false;document.getElementById("planArcs").disabled=false;}
+function renderGuide(search=""){const list=document.getElementById("guideList");if(!list)return;const completed=proj.completedGuideChapters||[];const nextN=proj.chapters.length+1;const GUIDE=activeGuide();if(!GUIDE.length){list.innerHTML=`<div class="mini" style="padding:10px 4px;line-height:1.6">No chapter guide for this book yet — and you do not need one. Just type beats in the <b>Chapter notes</b> box above and click <b>Write next chapter</b>. Or generate an outline from this book's own arcs:<br><br><button class="btn btn-ghost" id="genGuideBtn">Generate chapter guide</button></div>`;const gb=document.getElementById("genGuideBtn");if(gb)gb.addEventListener("click",generateGuide);return;}const filtered=search?GUIDE.filter(g=>g.notes.toLowerCase().includes(search.toLowerCase())||String(g.n).includes(search)):GUIDE;let currentArcLabel="";list.innerHTML=filtered.map(g=>{const isDone=completed.includes(g.n);const isNext=g.n===nextN;let arcHeader="";if(g.arc!==currentArcLabel){currentArcLabel=g.arc;arcHeader=`<div class="guide-arc-label">${esc(g.arc)}</div>`;}return`${arcHeader}<div class="guide-ch"><div class="guide-ch-header" onclick="toggleGuide(${g.n})"><span class="guide-ch-num">Ch ${g.n}${isNext?` <span class="next-tag">next</span>`:""}${g.cost?`<span class="cost-tag">cost</span>`:""}</span><span class="guide-ch-title">${esc((g.notes.split("\n").find(l=>l.startsWith("Beat 1"))||g.notes.split("\n")[0]||"").slice(0,55))}...</span>${isDone?`<span class="guide-ch-done">done</span>`:""}</div><div class="guide-ch-body ${isNext?"open":""}" id="gbody-${g.n}"><div class="guide-notes">${esc(g.notes)}</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button class="use-btn" onclick="useGuideNotes(${g.n})">Use these notes</button><button class="rbtn" onclick="markGuideDone(${g.n})">${isDone?"Unmark":"Mark done"}</button></div><details style="margin-top:8px"><summary style="font-size:12px;color:var(--faint);cursor:pointer">After writing — what to update</summary><div class="guide-updates">${esc(g.updates)}</div></details></div></div>`;}).join("");}
+function toggleGuide(n){const b=document.getElementById("gbody-"+n);if(b)b.classList.toggle("open");}
+async function generateGuide(){
+  if(busy) return;
+  if(!proj.bible){ setStatus("studioStatus",`<div class="banner">Build the story bible first.</div>`); return; }
+  busy=true;
+  const gb=document.getElementById("genGuideBtn"); if(gb){gb.disabled=true;gb.textContent="Generating outline…";}
+  try{
+    const startN=proj.chapters.length+1;
+    const sys="You are a story outliner. Output ONLY valid JSON, no markdown, no commentary.";
+    const p=`Create a chapter-by-chapter outline for the NEXT 15 chapters (numbers ${startN} to ${startN+14}) of this novel, following its arcs and current state. For each chapter give terse author beats.\n\nBIBLE:\n${proj.bible.slice(0,2500)}\n\nARCS/OUTLINE:\n${proj.outline||"(none — invent a sensible progression)"}\n\nSTORY SO FAR:\n${proj.beats.slice(-6).join("\n")||"(start of book)"}\n\nOutput JSON array exactly like:\n[{"n":${startN},"arc":"short arc name","notes":"ONLY <names> appear.\\nBeat 1: ...\\nBeat 2: ...\\nEnd on: ...","updates":"what to update after writing"}]`;
+    const raw=await callStory(sys,p,2200);
+    const arr=JSON.parse(raw.replace(/```json|```/g,"").trim());
+    if(Array.isArray(arr)&&arr.length){
+      proj.guide=(proj.guide||[]).filter(g=>!arr.some(a=>a.n===g.n)).concat(arr).sort((a,b)=>a.n-b.n);
+      save(); renderGuide();
+      setStatus("studioStatus",`<div class="banner ok">Chapter guide generated for chapters ${startN}–${startN+arr.length-1}.</div>`);
+    } else { setStatus("studioStatus",`<div class="banner">Could not parse the outline. Try again.</div>`); }
+  }catch(e){
+    setStatus("studioStatus",`<div class="banner">${esc(e.message)}${isRateLimit(e.message)?" (rate limit — wait or switch engine)":""}</div>`);
+  }
+  busy=false;
+}
+function useGuideNotes(n){const g=activeGuide().find(x=>x.n===n);if(!g)return;document.getElementById("direction").value=g.notes;document.getElementById("direction").scrollIntoView({behavior:"smooth",block:"center"});setStatus("studioStatus",`<div class="banner ok">Chapter ${n} notes loaded into the notes field above. Read them then click Write next chapter.</div>`);setTimeout(()=>{const el=document.getElementById("studioStatus");if(el&&el.innerHTML.includes("notes loaded"))el.innerHTML="";},5000);}
+function markGuideDone(n){if(!proj.completedGuideChapters)proj.completedGuideChapters=[];const i=proj.completedGuideChapters.indexOf(n);if(i>=0)proj.completedGuideChapters.splice(i,1);else proj.completedGuideChapters.push(n);save();renderGuide(document.getElementById("guideSearch").value);}
+function renderVault(){const vault=proj.vault||[];const el=document.getElementById("vaultDisplay");if(!el)return;if(!vault.length){el.innerHTML=`<div class="mini">No summaries yet. Auto-compresses every 10 chapters.</div>`;return;}el.innerHTML=vault.map((v,i)=>`<div class="vault-entry"><span>Arc ${i+1} (Ch${v.start}-${v.end}):</span> ${esc(v.summary.slice(0,180))}${v.summary.length>180?"...":""}</div>`).join("");}
+async function compressVaultAuto(){const vaulted=(proj.vault||[]).reduce((a,v)=>a+(v.end-v.start+1),0);if(proj.chapters.length-vaulted<10)return;await compressVault(false);}
+async function compressVault(manual=true){if(busy&&manual)return;const vaulted=(proj.vault||[]).reduce((a,v)=>a+(v.end-v.start+1),0);const toCompress=proj.chapters.slice(vaulted,proj.chapters.length-5);if(toCompress.length<5){if(manual)setStatus("vaultStatus",`<div class="banner warn">Need 5+ chapters to compress.</div>`);return;}if(manual)setStatus("vaultStatus",loadingHtml("compressing..."));try{const chapTexts=toCompress.map(c=>`Chapter ${c.n}: ${c.title}\n${c.text.slice(0,600)}`).join("\n---\n");const summary=await callStory("You are a story continuity expert. Output only the summary no preamble.",`Summarise these chapters into a continuity memory block (max 400 words). Include: key events, character status changes, world rules revealed, mysteries advanced, promises planted or paid.\n\n${chapTexts}`,600);if(!proj.vault)proj.vault=[];proj.vault.push({start:toCompress[0].n,end:toCompress[toCompress.length-1].n,summary});save();renderVault();if(manual)setStatus("vaultStatus",`<div class="banner ok">Compressed Ch${toCompress[0].n}-${toCompress[toCompress.length-1].n}.</div>`);}catch(e){if(manual)setStatus("vaultStatus",`<div class="banner">${esc(e.message)}</div>`);}}
+function clearVault(){if(!confirm("Clear vault summaries?"))return;proj.vault=[];save();renderVault();}
+function buildVaultCtx(){if(!proj.vault||!proj.vault.length)return"";return"ARC MEMORY VAULT (treat as ground truth for earlier chapters):\n"+proj.vault.map(v=>`[Ch${v.start}-${v.end}]: ${v.summary}`).join("\n\n")+"\n\n";}
+function parseCast(t){return(t||"").split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split("|").map(s=>s.trim());return{name:p[0]||"",role:p[1]||"",status:p[2]||"",facts:p[3]||""};}).filter(c=>c.name);}
+function runContinuityCheck(show=true){const results=[];const cast=parseCast(document.getElementById("cast").value);const lastChap=proj.chapters.length?proj.chapters[proj.chapters.length-1].text:"";const deathLog=document.getElementById("deathLog").value;cast.forEach(c=>{const isDead=/dead|unaccounted|gone|erased|missing/i.test(c.status);if(isDead&&lastChap&&lastChap.toLowerCase().includes(c.name.toLowerCase()))results.push({type:"fail",msg:`"${c.name}" is marked "${c.status}" but appears in the latest chapter without explanation.`});});if(deathLog){deathLog.split("\n").filter(l=>l.trim()).forEach(line=>{const nm=line.match(/:\s+([A-Z][a-zA-Z\s]+?)(?:\s+-|\s+\(|$)/);if(nm){const dName=nm[1].trim().toLowerCase();const inCast=cast.find(c=>c.name.toLowerCase().includes(dName));if(inCast&&!/dead|unaccounted|gone|erased/i.test(inCast.status))results.push({type:"warn",msg:`"${inCast.name}" is in the death log but not marked dead/unaccounted in Characters.`});}});}if(!cast.length)results.push({type:"warn",msg:"Characters field is empty."});else results.push({type:"pass",msg:`${cast.length} characters tracked.`});if(!document.getElementById("canon").value.trim())results.push({type:"warn",msg:"Canon notes empty."});else results.push({type:"pass",msg:"Canon notes present."});if(!document.getElementById("direction").value.trim())results.push({type:"warn",msg:"Chapter notes empty — add beats before writing."});else results.push({type:"pass",msg:"Chapter notes present."});if(show){document.getElementById("contCheckWrap").style.display="block";document.getElementById("checkResults").innerHTML=results.map(r=>`<div class="ci2 ${r.type}">${esc(r.msg)}</div>`).join("")||`<div class="ci2 pass">No issues detected.</div>`;}return results;}
+async function scoreConsistency(){if(proj.chapters.length<2)return;const last=proj.chapters[proj.chapters.length-1];const prev=proj.chapters.slice(-4,-1).map(c=>`Ch${c.n}: ${c.text.slice(0,400)}`).join("\n---\n");const canon=document.getElementById("canon").value;const deepCtx=retrieveOldContext(last.text.slice(0,1500));try{const sys="You are a story consistency expert. Output ONLY a JSON object nothing else.";const p=`Check this chapter for consistency against the canon, recent chapters, AND the earlier-story memory below. Catch long-range contradictions (facts set many chapters ago).\n\nCANON:\n${canon}\n\n${deepCtx?"EARLIER-STORY MEMORY:\n"+deepCtx+"\n":""}RECENT CHAPTERS:\n${prev}\n\nNEW CHAPTER:\n${last.text.slice(0,1200)}\n\nOutput JSON: {"score":0-100,"issues":["issue1"],"ok":["ok1"]}`;const raw=await callStory(sys,p,500);const data=JSON.parse(raw.replace(/\`\`\`json|\`\`\`/g,"").trim());const score=data.score||0;const badge=score>=80?"score-high":score>=60?"score-mid":"score-low";document.getElementById("scoreBadge").innerHTML=`<span class="score-badge ${badge}">${score}/100 - ${score>=80?"Consistent":score>=60?"Minor issues":"Check needed"}</span>`;let details="";if(data.issues&&data.issues.length)details+=data.issues.map(i=>`<div class="ci2 fail">${esc(i)}</div>`).join("");if(data.ok&&data.ok.length)details+=data.ok.map(i=>`<div class="ci2 pass">${esc(i)}</div>`).join("");document.getElementById("scoreDetails").innerHTML=details;document.getElementById("fixList").innerHTML="";document.getElementById("scoreWrap").style.display="block";populateDeepScanTargets();}catch(e){}}
+
+let pendingFixes=[];
+function populateDeepScanTargets(){const sel=document.getElementById("deepScanTarget");if(!sel)return;const cur=sel.value;sel.innerHTML=proj.chapters.map((c,i)=>`<option value="${i}">Ch ${c.n}: ${esc(c.title).slice(0,30)}</option>`).join("");sel.value=cur&&(+cur)<proj.chapters.length?cur:String(proj.chapters.length-1);}
+async function deepScan(){if(busy)return;if(proj.chapters.length<2){setStatus("studioStatus",`<div class="banner">Need at least 2 chapters to deep-scan.</div>`);return;}const idx=parseInt(document.getElementById("deepScanTarget").value,10);const target=proj.chapters[idx];if(!target)return;busy=true;document.getElementById("deepScanBtn").disabled=true;document.getElementById("fixList").innerHTML=loadingHtml(`deep-scanning Chapter ${target.n} against the whole story...`);try{const canon=document.getElementById("canon").value;const facts=[document.getElementById("deathLog").value,document.getElementById("promiseLog").value,document.getElementById("openMysteriesLog").value,document.getElementById("erosionLog").value].filter(Boolean).join("\n");const vault=(proj.vault||[]).map(v=>`[Ch${v.start}-${v.end}]: ${v.summary}`).join("\n");const otherRecaps=proj.beats.map((b,i)=>i===idx?null:`(Ch${i+1}) ${b}`).filter(Boolean).join("\n");const sys="You are a meticulous continuity editor. You find concrete contradictions and propose minimal text fixes. Output ONLY a JSON object, nothing else.";const p=`Check the TARGET CHAPTER against everything below. Find concrete continuity errors only (wrong names, eye/hair color, a dead character acting alive, contradicted canon/rules, broken timeline, contradicted earlier facts). For each, propose the SMALLEST possible edit: an EXACT substring "find" copied verbatim from the target chapter, and a "replace" that fixes it. Do not rewrite for style. If no real errors, return an empty issues array.\n\nCANON / RULES:\n${canon||"(none)"}\n\nLOCKED SPELLINGS (flag ANY proper noun spelled differently):\n${glossaryTerms().join(" / ")||"(none)"}\n\nPERMANENT LOGS (deaths, promises, mysteries, erosion):\n${facts||"(none)"}\n\nARC MEMORY VAULT:\n${vault||"(none)"}\n\nALL OTHER CHAPTER RECAPS:\n${otherRecaps||"(none)"}\n\nTARGET CHAPTER ${target.n} (full text):\n${target.text}\n\nOutput JSON exactly:\n{"score":0-100,"issues":[{"problem":"what's wrong & which earlier fact it contradicts","find":"exact text from target chapter","replace":"corrected text","note":"why"}]}`;const raw=await callStory(sys,p,1500);const data=JSON.parse(raw.replace(/\`\`\`json|\`\`\`/g,"").trim());const score=typeof data.score==="number"?data.score:null;if(score!==null){const badge=score>=80?"score-high":score>=60?"score-mid":"score-low";document.getElementById("scoreBadge").innerHTML=`<span class="score-badge ${badge}">${score}/100 - deep scan of Ch ${target.n}</span>`;document.getElementById("scoreWrap").style.display="block";}pendingFixes=[];const issues=(data.issues||[]).filter(it=>it&&it.find&&typeof it.find==="string");if(!issues.length){document.getElementById("fixList").innerHTML=`<div class="ci2 pass">No concrete contradictions found in Chapter ${target.n}.</div>`;busy=false;document.getElementById("deepScanBtn").disabled=false;return;}let html=`<div class="mini" style="margin-bottom:6px">Found ${issues.length} possible issue(s) in Ch ${target.n}. Review each - click Apply to make ONLY that edit.</div>`;issues.forEach((it,k)=>{const present=target.text.includes(it.find);pendingFixes.push(Object.assign({chapterIndex:idx,applicable:present},it));html+=`<div class="ci2 ${present?"warn":"fail"}" style="margin-bottom:8px"><div><strong>Issue ${k+1}:</strong> ${esc(it.problem||"")}</div>${it.note?`<div style="color:var(--faint);font-size:12px">${esc(it.note)}</div>`:""}<div style="font-size:12px;margin-top:4px"><span style="color:var(--crimson)">- ${esc((it.find||"").slice(0,160))}</span><br><span style="color:var(--gold-2)">+ ${esc((it.replace||"").slice(0,160))}</span></div>${present?`<button class="rbtn ok-btn" style="margin-top:6px" data-fix="${k}">Apply this fix</button>`:`<div style="color:var(--crimson);font-size:12px;margin-top:4px">Can't auto-apply (text not found verbatim) - edit manually.</div>`}</div>`;});document.getElementById("fixList").innerHTML=html;}catch(e){document.getElementById("fixList").innerHTML=`<div class="ci2 fail">Deep scan failed: ${esc(e.message)}${isRateLimit(e.message)?" (rate limit - wait or switch engine)":""}</div>`;}busy=false;document.getElementById("deepScanBtn").disabled=false;}
+function applyFix(k){const f=pendingFixes[k];if(!f||!f.applicable)return;const c=proj.chapters[f.chapterIndex];if(!c)return;if(!c.text.includes(f.find)){alert("The text changed - can't apply cleanly. Edit manually.");return;}if(!confirm(`Apply this fix to Chapter ${c.n}?\n\n- ${f.find.slice(0,200)}\n+ ${f.replace.slice(0,200)}`))return;c.text=c.text.replace(f.find,f.replace);proj.beats[f.chapterIndex]=c.text.replace(/[#*]/g," ").replace(/\s+/g," ").slice(0,180);f.applicable=false;save();renderStudio();const btn=document.querySelector(`[data-fix="${k}"]`);if(btn){btn.outerHTML=`<span style="color:var(--gold-2);font-size:12px">Applied</span>`;}}
+function smartCast(dir){const cast=parseCast(document.getElementById("cast").value);if(!cast.length)return"";const recent=(proj.chapters.slice(-2).map(c=>c.text).join(" ")+dir).toLowerCase();const rel=cast.filter(c=>recent.includes(c.name.toLowerCase())||/dead|unaccounted|gone/i.test(c.status));const full=rel.length?rel:cast.slice(0,8);return full.map(c=>`${c.name} | ${c.role} | ${c.status}${c.facts?" | "+c.facts:""}`).join("\n");}
+/* ============================================================
+   POWER SYSTEMS — accurate progression ladders for the genre.
+   Researched from xianxia/wuxia, murim, and hunter-system conventions.
+   These are fed into bible-building AND every chapter so the story
+   never violates its own power hierarchy.
+   ============================================================ */
+const POWER_SYSTEMS = {
+  cultivation: {
+    hint: "Qi → Foundation → Core → Nascent Soul → ascension. Breakthroughs need tribulations.",
+    ladder: "CULTIVATION REALMS (low → high), each split into Early/Mid/Late/Peak minor stages:\n1. Body Tempering — strengthen flesh, bone, meridians (mortal stage).\n2. Qi Condensation — absorb ambient qi, form internal reserves; ~200-300yr lifespan.\n3. Foundation Establishment — stabilize qi into a permanent base; FIRST irreversible step. Foundation QUALITY here caps all future potential and cannot be fixed later. Crosses a heavenly tribulation.\n4. Core Formation (Golden Core) — compress qi into a literal core in the dantian; flight & real destructive techniques; ~500yr+. Core quality (e.g. Dao lines) sets the ceiling.\n5. Nascent Soul — a spiritual avatar is born inside the core; soul can leave the body and survive bodily death; ~1000yr+.\n6. Soul Transformation / Spirit Severing — sever mortal attachments; power answers to will, not just technique.\n7. Body Integration — body and soul fuse into one spiritual entity.\n8. Tribulation / Ascension — transcend into immortality.",
+    rules: "POWER RULES:\n- Progression is irreversible thresholds, NOT smooth power gain. Each realm is a fundamental transformation.\n- A higher realm utterly outclasses a lower one — a Core Formation cultivator can defeat armies of Foundation cultivators. Never let a lower realm beat a higher realm without an extraordinary, costly, well-justified reason (treasure, formation, bloodline, sacrifice).\n- Major breakthroughs require surviving a TRIBULATION (heavenly lightning, etc.); failure scatters body and soul (death).\n- BOTTLENECKS are comprehension problems, not resource problems — a cultivator can be stuck at a peak for years until they grasp an insight; qi alone won't break through.\n- Lifespan increases dramatically each realm. The MC's rise must feel earned, with setbacks and costs.\n- Never skip realms. Reference the protagonist's current realm consistently every chapter."
+  },
+  murim: {
+    hint: "3rd-rate → 2nd-rate → 1st-rate → Peak → Transcendent → Grandmaster. Enlightenment gates each tier.",
+    ladder: "MURIM MARTIAL RANKS (low → high):\n1. Third-rate (삼류) — basics of martial arts; unrefined internal qi (gi); common grunts.\n2. Second-rate (이류) — grasped fundamentals; a few years of accumulated internal energy.\n3. First-rate (일류) — elite warrior; can shape qi (e.g. into sword aura / sword qi); a decade+ of gi.\n4. Peak / Master (절정, 'Mortal Peak') — personalized martial arts, deep qi understanding; begins to perceive 'intent'; decades of gi. ~50 first-rate fighters are needed to exhaust one Peak Master.\n5. Transcendent / Superior Master (초절정) — body reformation beyond human limits; power-qi, can sense killing intent as 'lines'; a one-man army.\n6. Grandmaster / Supreme Master (화경, 'Profound') — materialize intent and domain; only a couple per era.\n7. Unrestrained / Divine Realm (현경 / 생사경) — no longer bound by public forces; life-and-death mastery; near-legendary.\n8. Heaven-Man Unity (천인합일) — legendary, deity-tier; exists mostly in myth.",
+    rules: "POWER RULES:\n- Strict hierarchy: third-rate cannot challenge second-rate; second-rate falls to first-rate; the gap widens enormously each tier. A lower-ranked fighter beating a higher one is a major event needing strong justification (hidden technique, poison, terrain, numbers, a unique body).\n- Each tier above Peak requires ENLIGHTENMENT/comprehension to break through, not just training time.\n- Internal energy (gi) is often measured in 'years' of accumulation. Reference techniques: sword qi/aura, internal energy, meridians, dantian.\n- Factions matter: Righteous (정파), Unorthodox/Evil (사파), and the Demonic Cult (마교) led by the Heavenly Demon. Keep factional politics consistent.\n- Honor the murim setting (Central Plains / wuxia world). Keep the protagonist's rank consistent and earn every promotion."
+  },
+  hunter: {
+    hint: "E→D→C→B→A→S ranks, gates/dungeons, awakening. Build an ORIGINAL system, not Solo Leveling.",
+    ladder: "HUNTER / AWAKENED SYSTEM (this is an ORIGINAL system inspired by the genre — do NOT copy Solo Leveling names, characters, or the Shadow Monarch):\n- Awakening: ordinary people spontaneously gain the ability to process mana and become 'Awakened' (hunters). It happens without warning.\n- Ranks by measured power: E (barely above human) → D → C (professional) → B → A (elite, nationally known) → S (rarest, a national asset). Optionally a special tier above S for the very strongest.\n- Gates / rifts open, filled with beasts; rated by the same E–S scale. If a gate's boss isn't cleared before its timer, it 'breaks' and floods the area with monsters.\n- Hunters take roles: vanguard fighter, tank, mage/ranged, healer/support, assassin.\n- Normally a hunter's rank is FIXED at awakening — training sharpens skill within that ceiling but doesn't raise the rank. A rare 'second awakening' is the only ordinary way up.",
+    rules: "POWER RULES:\n- Make the world and terminology ORIGINAL. Invent your own association names, gate/rift terminology, monster types, and the protagonist's unique growth mechanic. Do NOT reuse Solo Leveling's proper nouns, 'Shadow Monarch', 'Rulers/Monarchs', Igris/Beru/Ashborn, or its exact System wording.\n- If the protagonist has a unique leveling/growth ability, make it the rare exception in a world where everyone else is rank-locked — and give it its OWN identity, costs, and limits.\n- Keep rank gaps meaningful: an S-rank vastly outclasses an A-rank; a single high-rank hunter can clear gates that need whole teams of lower ranks.\n- Track the protagonist's current rank, known skills, and any 'system' quests/rewards consistently. Honor gate timers and dungeon-break stakes.\n- Ground it in the modern-world-with-gates premise unless the idea says otherwise."
+  }
+};
+/* ===== GENRE PRESETS — quick-pick + craft guidance fed into bible & chapters ===== */
+const GENRES = {
+  "Dark Fantasy":"grim, morally grey fantasy; dread under wonder; consequences are real and costly.",
+  "Cultivation / Xianxia":"eastern cultivation fantasy; sects, qi, realms, dao insight, ruthless power hierarchy.",
+  "Murim / Wuxia":"martial-arts world of clans and sects; honor, vengeance, internal energy, factional war.",
+  "Hunter / LitRPG":"modern world with gates, awakened hunters, ranks and a game-like growth system.",
+  "Psychological":"interiority, unreliable perception, obsession and unraveling minds; tension from within, not action. Use deep POV, creeping doubt, and ambiguity.",
+  "Horror":"mounting dread, the uncanny, helplessness; restraint and implication scarier than gore. Build sensory wrongness; let safety erode slowly.",
+  "Thriller / Suspense":"relentless momentum, ticking clocks, twists and reversals; every scene raises stakes or tightens the noose.",
+  "Mystery / Detective":"clues, red herrings, fair-play deduction; withhold and reveal with control; the reader should feel they could solve it.",
+  "Romance":"emotional intimacy and yearning; tension from want vs obstacle; earn every beat of connection through specific moments.",
+  "Slice of Life / Real Life":"grounded, contemporary, character-driven; small true moments, ordinary stakes made meaningful; honest dialogue, no melodrama.",
+  "Sci-Fi":"speculative tech/worlds with internal logic; wonder plus consequence; ground big ideas in concrete human stakes.",
+  "Epic / High Fantasy":"expansive world, mythic scope, multiple powers and factions; lore and grandeur balanced with personal stakes.",
+  "Tragedy / Literary":"character flaw drives inevitable downfall; lyrical precision, deep interiority, emotional truth over plot mechanics.",
+  "Action / Adventure":"kinetic momentum, set-pieces, exploration and danger; clear stakes, vivid choreography, forward drive.",
+  "Crime / Noir":"morally murky underworld; cynical voice, atmosphere of corruption, sharp dialogue, consequences catch up."
+};
+function genreGuide(){
+  const g=(proj.setup&&proj.setup.genre)||"";
+  if(!g) return "";
+  // match any known genre keyword present in the (possibly free-text) genre field
+  const gl=g.toLowerCase();
+  const hits=Object.keys(GENRES).filter(k=>{
+    const words=k.toLowerCase().split(/[\/ ]+/).filter(w=>w.length>3);
+    return words.some(w=>gl.includes(w));
+  });
+  if(!hits.length) return "";
+  return "\nGENRE CRAFT — write to the conventions and feel of this genre:\n"+hits.map(k=>`- ${k}: ${GENRES[k]}`).join("\n")+"\n";
+}
+function renderGenreChips(){
+  const wrap=document.getElementById("genreChips"); if(!wrap) return;
+  const cur=(document.getElementById("genre").value||"").toLowerCase();
+  wrap.innerHTML=Object.keys(GENRES).map(k=>{
+    const active=k.toLowerCase().split(/[\/ ]+/).filter(w=>w.length>3).some(w=>cur.includes(w));
+    return `<span class="chip${active?" active":""}" data-genre="${esc(k)}">${esc(k)}</span>`;
+  }).join("");
+}
+function powerSystemGuide(){
+  const k=(proj.setup&&proj.setup.powerSystem)||"none";
+  const ps=POWER_SYSTEMS[k]; if(!ps) return "";
+  return `\nPOWER SYSTEM — the story MUST obey this progression and never contradict it:\n${ps.ladder}\n${ps.rules}\n`;
+}
+const EMOTION_LABELS={dread:"dread and creeping suspense",grief:"grief and loss",triumph:"hard-won triumph and catharsis",tension:"tense, high-stakes urgency",tender:"tenderness and quiet intimacy",rage:"cold fury and the pull toward vengeance",wonder:"awe and wonder",melancholy:"melancholy, bittersweet ache",hope:"fragile hope and resolve",dark:"a cold, ominous dread"};
+// Emotional craft block. AUTO = the AI judges the right emotion from the story itself; otherwise it targets the chosen one.
+function emotionDirective(){
+  const sel=document.getElementById("emotion");
+  const v=sel?sel.value:"auto";
+  const craft="Render emotion through CRAFT, never by naming it: physical sensation, behaviour and body language, subtext in dialogue, telling detail, rhythm and restraint. Do NOT write 'she felt sad' or 'he was angry' — show it. Let one emotional beat land hardest rather than spreading thin.";
+  if(v && v!=="auto" && EMOTION_LABELS[v]){
+    return `\nEMOTIONAL TARGET for this chapter: build toward ${EMOTION_LABELS[v]}. ${craft}\n`;
+  }
+  // AUTO — instruct the model to derive the fitting emotion from arc + recent events
+  return `\nEMOTIONAL DIRECTION (decide for yourself): Before writing, judge what this chapter should make the reader FEEL, based on the current arc, the most recent events, the characters' situation, and where the plot is heading. Choose the emotion this specific moment earns (e.g. dread, grief, triumph, tension, tenderness, betrayal, awe, melancholy, hope) and write the chapter to deliver it. Vary the emotional register across chapters — don't repeat the same note every time. ${craft}\n`;
+}
+// Style reference: echo a prose voice the author has rights to (own work / public domain).
+function styleRefBlock(){
+  const el=document.getElementById("styleRef");
+  const t=el?el.value.trim():(proj.styleRef||"").trim();
+  if(!t) return "";
+  return "\nSTYLE REFERENCE — match the VOICE, rhythm, and sentence texture of this sample (mirror the style ONLY, never the content, characters, or wording):\n\"\"\"\n"+t.slice(0,1400)+"\n\"\"\"\n";
+}
+// Natural human voice — reduce AI-tells that detectors and readers notice.
+function humanizeBlock(){
+  const el=document.getElementById("humanize");
+  const on=el?el.checked:(proj.humanize!==false);
+  if(!on) return "";
+  return "\nNATURAL VOICE — write like a skilled human author, not an AI:\n- Vary sentence length and structure; avoid a uniform rhythm. Use the occasional fragment.\n- BAN clichés and AI-tell phrases: 'a shiver ran down', 'little did they know', 'a testament to', 'in a world where', 'sent shivers', 'barely above a whisper', 'a mixture of X and Y', 'couldn't help but', 'a stark reminder', 'the air was thick with'.\n- Avoid over-explaining emotion or summarizing what just happened. Trust the reader.\n- Prefer concrete, specific, sometimes surprising word choices over safe generic ones.\n- Let dialogue carry subtext; don't have characters state their feelings outright.\n- No tidy moralizing or neat thematic bows at the end.\n";
+}
+function downloadCover(){
+  if(!proj.cover){ alert("Generate or upload a cover first."); return; }
+  const im=new Image(); im.referrerPolicy="no-referrer";
+  im.onload=()=>{
+    // Webnovel spec: exactly 600x800 JPG. Cover-fit crop to avoid distortion.
+    const cv=document.createElement("canvas"); cv.width=600; cv.height=800;
+    const ctx=cv.getContext("2d");
+    const sR=im.width/im.height, tR=600/800; let sw,sh,sx,sy;
+    if(sR>tR){ sh=im.height; sw=sh*tR; sx=(im.width-sw)/2; sy=0; }
+    else { sw=im.width; sh=sw/tR; sx=0; sy=(im.height-sh)/2; }
+    ctx.drawImage(im, sx,sy,sw,sh, 0,0,600,800);
+    cv.toBlob(b=>{
+      const a=document.createElement("a");
+      a.href=URL.createObjectURL(b);
+      a.download=(projLabel(proj)||"cover").replace(/[^a-z0-9]+/gi,"_")+"_600x800.jpg";
+      a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    },"image/jpeg",0.92);
+  };
+  im.onerror=()=>alert("Couldn't process the cover image.");
+  im.src=proj.cover;
+}
+// Smoother transitions: open the new chapter connected to how the last one ended (unless a clean break is intended).
+function transitionDirective(){
+  const v=document.getElementById("sceneType")?document.getElementById("sceneType").value:"normal";
+  if(v==="flashback"||v==="dream"||v==="interlude"||v==="timeskip"){
+    return "TRANSITION: a deliberate shift from the previous chapter is expected here — open with a clear signal of the change rather than continuing the previous moment.";
+  }
+  return "TRANSITION: open this chapter so it connects naturally to that ending — pick up the thread, mood, or immediate aftermath rather than resetting to a generic scene. Don't repeat those final lines; move them forward.";
+}
+// Pacing variety: vary chapter shape so the rhythm doesn't flatten across a long run.
+const PACING_MODES=[
+  "a TENSE, propulsive chapter — short paragraphs, rising stakes, momentum.",
+  "a DIALOGUE-driven chapter — character voices, subtext, relationships in motion.",
+  "a QUIET, atmospheric chapter — slower, observational, deepen mood and place.",
+  "an ACTION/confrontation chapter — kinetic, vivid, consequential.",
+  "a REVELATION chapter — a discovery or shift that recontextualizes what came before.",
+  "a CHARACTER-interiority chapter — emotional depth, reflection, want vs. need."
+];
+function pacingDirective(){
+  // look at the last few chapters' inferred shape to push for variety.
+  const recent=(proj.chapters||[]).slice(-3).map(c=>(c.pace||"")).filter(Boolean);
+  // pick a suggested mode that wasn't just used; rotate by chapter number for determinism + variety.
+  const n=(proj.chapters||[]).length;
+  let idx=n%PACING_MODES.length;
+  let tries=0;
+  while(recent.includes(String(idx))&&tries<PACING_MODES.length){idx=(idx+1)%PACING_MODES.length;tries++;}
+  proj._suggestedPace=String(idx);
+  return "\nPACING — for variety across the book, lean this chapter toward "+PACING_MODES[idx]+" (Always follow the author's chapter notes first; this only shapes HOW the beats are delivered, never overrides WHAT happens.)\n";
+}
+// Scene type — handles flashbacks/dreams/interludes/time-skips without corrupting present-day continuity.
+function sceneInfo(){
+  const el=document.getElementById("sceneType");
+  return el?el.value:"normal";
+}
+function sceneDirective(){
+  const v=sceneInfo();
+  if(v==="flashback") return "\nSCENE TYPE — FLASHBACK: This chapter depicts a PAST event, not the present moment. Open with a clear temporal signal (a date, 'Years before…', a sensory trigger into memory) so the reader knows we've moved back in time, and land back or close cleanly at the end. Do NOT advance the present-day timeline. You MAY reveal backstory, but it must not contradict established canon. The 'continue forward' rule is suspended for this chapter.\n";
+  if(v==="dream") return "\nSCENE TYPE — DREAM/VISION: This chapter is surreal and NOT literally happening. It may bend logic, symbolism, and physics. Nothing here counts as a real event; it should unsettle or foreshadow, not change the literal plot state. Frame it clearly as dream/vision.\n";
+  if(v==="interlude") return "\nSCENE TYPE — INTERLUDE: A side scene, possibly a different POV character or a parallel event in the world, separate from the protagonist's immediate thread. Keep it self-contained.\n";
+  if(v==="timeskip") return "\nSCENE TYPE — TIME SKIP: Significant in-world time has passed since the last chapter. Open by establishing how much time passed and what changed in the interim (briefly), then proceed in the new present.\n";
+  return "";
+}
+// scene types that must NOT write into present-day timeline/canon/threads
+function sceneIsNonLinear(){const v=sceneInfo();return v==="flashback"||v==="dream";}
+function updatePowerHint(){const el=document.getElementById("powerHint");if(!el)return;const k=document.getElementById("powerSystem").value;const ps=POWER_SYSTEMS[k];el.textContent=ps?ps.hint:"";}
+function styleGuide(){const s=(proj.setup.style)||"web";if(s==="literary")return"Write in a dark literary style: precise imagery, deep interiority, varied sentence rhythm. Atmosphere through concrete specific detail never stock phrases. Show emotion through action and behaviour never label feelings. End on a hook or unresolved wrongness.";if(s==="balanced")return"Write in an engaging balanced commercial-fiction style with clear momentum and scene-driven prose.";return"Write in a polished web-serial style optimized for chapter-by-chapter serialization: open with a hook in the first 1-2 lines; keep scene momentum and forward drive; favor active voice and concrete sensory detail; give the chapter a clear emotional or plot payoff; and END on a hook, reversal, or unresolved question that pulls the reader to the next chapter. Avoid info-dumps - reveal world and backstory through action and dialogue. Keep paragraphs tight and readable on mobile.";}
+function recentBeats(){return proj.beats.slice(-8).map((b,i)=>`(Ch${proj.beats.length-Math.min(8,proj.beats.length)+i+1}) ${b}`).join("\n");}
+
+/* ===== FEATURE 4: foreshadowing/payoff tracker ===== */
+function mergeThreads(block,n){
+  if(!block)return;
+  const el=document.getElementById("openMysteriesLog");if(!el)return;
+  let lines=el.value.split("\n").map(l=>l.trim()).filter(Boolean);
+  const plants=[],payoffs=[];
+  block.split("\n").forEach(l=>{l=l.trim();const mp=l.match(/^PLANT\s*:?\s*(.+)/i);const mo=l.match(/^PAYOFF\s*:?\s*(.+)/i);if(mp&&mp[1])plants.push(mp[1].trim());else if(mo&&mo[1])payoffs.push(mo[1].trim());});
+  // mark payoffs: find a matching [OPEN] line and close it
+  payoffs.forEach(po=>{const kw=po.toLowerCase().split(/\s+/).filter(w=>w.length>3).slice(0,4);let idx=lines.findIndex(l=>/\[OPEN\]/i.test(l)&&kw.some(k=>l.toLowerCase().includes(k)));if(idx>=0){lines[idx]=lines[idx].replace(/\[OPEN\]/i,`[PAID Ch${n}]`);}});
+  // add new plants as [OPEN]
+  const seen=new Set(lines.map(l=>l.toLowerCase().replace(/^\[[^\]]*\]\s*/,"")));
+  plants.forEach(pl=>{const key=pl.toLowerCase();if(![...seen].some(s=>s.includes(key)||key.includes(s))){lines.push(`[OPEN] Ch${n}: ${pl}`);seen.add(key);}});
+  el.value=lines.join("\n");proj.openMysteriesLog=el.value;
+}
+// returns HTML warning if any [OPEN] thread is older than ~25 chapters
+function overdueThreadsBanner(){
+  const el=document.getElementById("openMysteriesLog");if(!el)return "";
+  const cur=proj.chapters.length;
+  const overdue=el.value.split("\n").map(l=>l.trim()).filter(l=>/\[OPEN\]/i.test(l)).map(l=>{const m=l.match(/Ch\s*(\d+)/i);return{l,n:m?+m[1]:null};}).filter(x=>x.n&&cur-x.n>=25);
+  if(!overdue.length)return "";
+  return `<div class="banner" style="margin-top:6px">${overdue.length} foreshadowing thread(s) have been open 25+ chapters — consider paying one off:<br>${overdue.slice(0,4).map(x=>"• "+esc(x.l.replace(/^\[OPEN\]\s*/i,""))).join("<br>")}</div>`;
+}
+
+/* ===== FEATURE 1: character voice locking ===== */
+function parseVoices(){return (document.getElementById("voices")?document.getElementById("voices").value:proj.voices||"").split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const i=l.indexOf("|");if(i<0)return null;return{name:l.slice(0,i).trim(),card:l.slice(i+1).trim()};}).filter(v=>v&&v.name);}
+function voiceCardsFor(upcomingText){
+  const vs=parseVoices();if(!vs.length)return "";
+  const hay=((upcomingText||"")+" "+(proj.cast||"")).toLowerCase();
+  // include a voice card if the character is named in the notes or current roster; else include all if few
+  let pick=vs.filter(v=>{const parts=v.name.toLowerCase().split(/\s+/).filter(w=>w.length>2);return hay.includes(v.name.toLowerCase())||parts.some(w=>new RegExp("\\b"+w.replace(/[^a-z0-9]/g,"")+"\\b").test(hay));});
+  if(!pick.length)pick=vs.slice(0,6);
+  return "\nCHARACTER VOICES - when these characters speak, match their voice exactly:\n"+pick.map(v=>`- ${v.name}: ${v.card}`).join("\n")+"\n";
+}
+/* ===== FEATURE 2: name/term glossary (locked spellings) ===== */
+function glossaryTerms(){return (document.getElementById("glossary")?document.getElementById("glossary").value:proj.glossary||"").split("\n").map(l=>l.trim()).filter(Boolean);}
+function glossaryBlock(){const g=glossaryTerms();return g.length?"\nLOCKED SPELLINGS - spell these proper nouns EXACTLY, never vary:\n"+g.join(" / ")+"\n":"";}
+/* ===== FEATURE 5: prose anti-repetition guard ===== */
+function phraseAvoidBlock(){const ph=(proj.phrases||[]).slice(0,18);return ph.length?"\nAVOID these overused phrases/crutches from earlier chapters; do not reuse them:\n"+ph.map(p=>`"${p}"`).join(", ")+"\n":"";}
+// after a chapter, mine recurring multi-word phrases to feed the avoid-list next time
+const PH_STOP=new Set("the a an and or but of to in on at for with from into over under is are was were be been being it its his her their they them he she you your i we as by this that these those then than so".split(/\s+/));
+function updatePhraseGuard(text){
+  if(!text)return;
+  const words=text.toLowerCase().replace(/[^a-z0-9\s]/g," ").split(/\s+/).filter(Boolean);
+  const grams={};
+  for(let g=4;g>=3;g--){for(let i=0;i+g<=words.length;i++){const slice=words.slice(i,i+g);if(PH_STOP.has(slice[0])||PH_STOP.has(slice[g-1]))continue;const key=slice.join(" ");grams[key]=(grams[key]||0)+1;}}
+  // count phrase occurrences across the WHOLE book (cheap: only track frequent ones)
+  proj._phraseCounts=proj._phraseCounts||{};
+  Object.keys(grams).forEach(k=>{proj._phraseCounts[k]=(proj._phraseCounts[k]||0)+grams[k];});
+  // promote phrases seen 3+ times into the avoid list
+  const hot=Object.entries(proj._phraseCounts).filter(([k,c])=>c>=3).sort((a,b)=>b[1]-a[1]).map(([k])=>k);
+  proj.phrases=[...new Set(hot)].slice(0,40);
+}
+
+/* ===== DEEP MEMORY: keyword retrieval of OLD facts (resurfaces specific old chapters/vault entries on demand) ===== */
+const RT_STOP=new Set("the a an and or but of to in on at for with from into over under is are was were be been being it its his her their they them he she you i we as by this that these those then than so if when while where what who which chapter into out up down off about will would could should has have had not no yes very just only also more most some any all".split(/\s+/));
+function rtKeywords(t){return(t||"").toLowerCase().replace(/[^a-z0-9\s]/g," ").split(/\s+/).filter(w=>w.length>3&&!RT_STOP.has(w));}
+function retrieveOldContext(seedText){
+  const seeds=new Set(rtKeywords(seedText));
+  rtKeywords((proj.cast||"")+" "+(proj.goal||"")).forEach(w=>seeds.add(w));
+  if(!seeds.size)return "";
+  const out=[];
+  // (a) relevant OLD chapter recaps, excluding the recent-8 window already shown
+  const total=proj.beats.length;
+  if(total>8){
+    const scored=[];
+    for(let i=0;i<total-8;i++){let h=0;for(const w of rtKeywords(proj.beats[i])){if(seeds.has(w))h++;}if(h>0)scored.push({i,h});}
+    scored.sort((a,b)=>b.h-a.h||a.i-b.i);
+    const pick=scored.slice(0,6).sort((a,b)=>a.i-b.i);
+    if(pick.length)out.push("RELEVANT EARLIER CHAPTERS (older recaps that connect to what's coming — honor them):\n"+pick.map(p=>`(Ch${p.i+1}) ${proj.beats[p.i]}`).join("\n"));
+  }
+  // (b) relevant vault arc-summaries by keyword (in case an old arc matters again)
+  const vs=(proj.vault||[]);
+  if(vs.length){
+    const vscored=vs.map((v,idx)=>{let h=0;for(const w of rtKeywords(v.summary)){if(seeds.has(w))h++;}return{v,h};}).filter(x=>x.h>0).sort((a,b)=>b.h-a.h).slice(0,3);
+    if(vscored.length)out.push("RELEVANT ARC MEMORY (older arcs connected to this chapter):\n"+vscored.map(x=>`[Ch${x.v.start}-${x.v.end}]: ${x.v.summary}`).join("\n\n"));
+  }
+  return out.length? out.join("\n\n")+"\n\n" : "";
+}
+
+/* ===== DEEP MEMORY: auto-append AI-extracted permanent facts into Canon notes (deduped) ===== */
+function mergeCanonFacts(newBlock){
+  if(!newBlock)return;
+  const el=document.getElementById("canon");
+  const cur=(el.value||"").trim();
+  const existing=cur.split("\n").map(l=>l.trim()).filter(Boolean);
+  const seen=new Set(existing.map(l=>l.toLowerCase().replace(/^[-*]\s*/,"")));
+  const adds=newBlock.split("\n").map(l=>l.trim()).filter(Boolean)
+    .map(l=>l.startsWith("-")?l:("- "+l))
+    .filter(l=>{const k=l.toLowerCase().replace(/^[-*]\s*/,"");if(k.length<4||seen.has(k))return false;seen.add(k);return true;});
+  if(adds.length){
+    el.value=(existing.length?existing.join("\n")+"\n":"")+adds.join("\n");
+    proj.canon=el.value;
+  }
+}
+function _titleFirstWord(t){const ws=(t||"").trim().toLowerCase().replace(/^[^a-z0-9]+/,"").split(/\s+/).filter(Boolean);let j=0;while(j<ws.length-1&&["the","a","an"].includes(ws[j]))j++;return ws[j]||"";}
+function _cleanTitle(t){return (t||"").trim().replace(/^["'#*\s]+/,"").replace(/["'\s]+$/,"").replace(/^Chapter\s*\d*\s*:?\s*/i,"").replace(/\.$/,"").trim();}
+// Dedicated title pass: reads the ACTUAL chapter prose and names it from a concrete element. 1-6 words ok. Avoids reused titles/openers.
+/* generate voice cards from bible + sample chapters */
+async function genVoices(){
+  if(busy)return; busy=true; document.getElementById("genVoices").disabled=true;
+  setStatus("voiceStatus",loadingHtml("profiling each character's voice…"));
+  try{
+    const sample=proj.chapters.slice(-6).map(c=>c.text.slice(0,1200)).join("\n\n").slice(0,9000);
+    const sys="You are a dialogue and character-voice specialist. Output ONLY lines, nothing else.";
+    const p=`From this story bible, character roster${sample?", and sample chapters":""}, write a distinct DIALOGUE VOICE card for each named character so their speech never blurs. Output ONLY lines, one per character, EXACTLY:\nName | speech pattern, vocabulary, verbal tics, attitude in dialogue\n\nBIBLE:\n${proj.bible}\n\nROSTER:\n${proj.cast||"(none)"}\n\n${sample?"SAMPLE CHAPTERS:\n"+sample:""}`;
+    const out=await callStory(sys,p,900);
+    const cleaned=out.split("\n").filter(l=>l.includes("|")).join("\n")||out.trim();
+    document.getElementById("voices").value=cleaned; proj.voices=cleaned; save();
+    setStatus("voiceStatus",`<div class="banner ok">Voice cards ready — edit any line to fine-tune.</div>`);
+  }catch(e){setStatus("voiceStatus",`<div class="banner">${esc(e.message)}</div>`);}
+  busy=false; document.getElementById("genVoices").disabled=false;
+}
+/* extract proper-noun glossary from chapters */
+/* ===== CHARACTER DESIGNS — appearance profile + portrait per character ===== */
+function characterPortraitURL(name, look){
+  const style=(proj.setup&&proj.setup.genre)||"";
+  const prompt=`character portrait of ${name}, ${look}, ${style} style, head and shoulders, detailed face, cinematic lighting, digital painting, no text`.replace(/[#*\n]/g," ").slice(0,380);
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&nologo=true&seed=${Math.floor(Math.random()*1e6)}&model=flux`;
+}
+function renderDesigns(){
+  const grid=document.getElementById("designGrid"); if(!grid) return;
+  const cast=parseCast(document.getElementById("cast").value||proj.cast||"").filter(c=>c.name);
+  if(!cast.length){ grid.innerHTML=`<div class="mini">No characters yet. Write or import chapters first, then come back.</div>`; return; }
+  proj.designs=proj.designs||{};
+  grid.innerHTML=cast.map(c=>{
+    const d=proj.designs[c.name]||{};
+    const portrait=d.img
+      ? `<img class="design-portrait" src="${esc(d.img)}" alt="${esc(c.name)}" referrerpolicy="no-referrer"/>`
+      : `<div class="design-portrait ph">No portrait yet</div>`;
+    const look=d.look?esc(d.look):`<span style="color:var(--faint)">${esc(c.role||"")}${c.facts?" — "+esc(c.facts):""}</span>`;
+    return `<div class="design-card">
+      ${portrait}
+      <div class="design-body"><div class="design-name">${esc(c.name)}</div><div class="design-look">${look}</div></div>
+      <div class="toolbar"><button class="rbtn" data-design="${esc(c.name)}">${d.look?"Regenerate":"Generate look"}</button></div>
+    </div>`;
+  }).join("");
+}
+async function designOne(name){
+  if(busy) return;
+  const cast=parseCast(document.getElementById("cast").value||proj.cast||"");
+  const c=cast.find(x=>x.name===name); if(!c) return;
+  busy=true; setStatus("designStatus",loadingHtml(`designing ${name}…`));
+  proj.designs=proj.designs||{};
+  try{
+    // 1) appearance profile from the AI (grounded in bible + what the story says)
+    const sys="You are a character designer. Output ONLY a vivid physical-appearance description, 2-3 sentences, concrete visual details only (age, build, hair, eyes, features, typical clothing, distinguishing marks). No backstory, no personality, no name repetition.";
+    const sample=proj.chapters.slice(0,4).map(ch=>ch.text.slice(0,800)).join("\n").slice(0,4000);
+    const p=`Describe how this character physically LOOKS, consistent with the story.\nCharacter: ${c.name} — ${c.role||""}${c.facts?" — "+c.facts:""}\nGenre/tone: ${(proj.setup&&proj.setup.genre)||""}\nBIBLE:\n${proj.bible.slice(0,1500)}\n${sample?"STORY EXCERPTS:\n"+sample:""}`;
+    const look=(await callStory(sys,p,200)).trim().replace(/^["']|["']$/g,"");
+    // 2) portrait via free image service
+    const img=characterPortraitURL(c.name, look);
+    await new Promise((res,rej)=>{const im=new Image();im.referrerPolicy="no-referrer";im.onload=res;im.onerror=rej;im.src=img;});
+    proj.designs[c.name]={look,img};
+    save(); renderDesigns();
+    setStatus("designStatus",`<div class="banner ok">${esc(c.name)} designed.</div>`);
+  }catch(e){
+    // still save the look even if the image service failed
+    if(proj.designs[name]&&proj.designs[name].look){ renderDesigns(); }
+    setStatus("designStatus",`<div class="banner">${esc(e.message||"Image service didn't respond; try Regenerate.")}</div>`);
+  }
+  busy=false;
+}
+async function designAll(){
+  if(busy) return;
+  const cast=parseCast(document.getElementById("cast").value||proj.cast||"").filter(c=>c.name);
+  if(!cast.length){ setStatus("designStatus",`<div class="banner">No characters yet.</div>`); return; }
+  for(const c of cast){ if(busy) await new Promise(r=>setTimeout(r,50)); await designOne(c.name); }
+  setStatus("designStatus",`<div class="banner ok">Designed ${cast.length} character(s).</div>`);
+}
+async function genGlossary(){
+  if(busy)return; if(!proj.chapters.length){setStatus("glossaryStatus",`<div class="banner">Write or import chapters first.</div>`);return;}
+  busy=true; document.getElementById("genGlossary").disabled=true;
+  setStatus("glossaryStatus",loadingHtml("extracting names & terms…"));
+  try{
+    const sample=proj.chapters.map(c=>c.text.slice(0,1500)).join("\n\n").slice(0,16000);
+    const sys="You extract canonical proper nouns. Output ONLY a newline-separated list, no numbering, no commentary.";
+    const p=`List every distinct proper noun and coined term from this story (character names, place names, factions, items, special terminology). One per line, using the spelling the text uses most. No duplicates, no common words.\n\n${sample}\n\nALSO include any already here:\n${proj.glossary||""}`;
+    const out=await callStory(sys,p,800);
+    const lines=[...new Set(out.split("\n").map(l=>l.replace(/^[-*\d.\)\s]+/,"").trim()).filter(l=>l&&l.length<40))];
+    const merged=[...new Set([...glossaryTerms(),...lines])];
+    document.getElementById("glossary").value=merged.join("\n"); proj.glossary=merged.join("\n"); save();
+    setStatus("glossaryStatus",`<div class="banner ok">Glossary built (${merged.length} terms). Edit to remove any stray entries.</div>`);
+  }catch(e){setStatus("glossaryStatus",`<div class="banner">${esc(e.message)}</div>`);}
+  busy=false; document.getElementById("genGlossary").disabled=false;
+}
+/* FEATURE 3: whole-book continuity audit — sweeps every chapter, returns prioritized issues */
+// PRE-PUBLISH CHECK — scans the current chapter for the patterns Webnovel flags (padding, repetition, AI-tells).
+// Local + free (no AI call). Helps you clean a chapter before posting for serialization.
+const AI_TELLS=["a shiver ran down","shivers down","little did","couldn't help but","a testament to","the air was thick with","barely above a whisper","sent shivers","a mixture of","a stark reminder","in that moment","time seemed to","a chill ran","heart pounded in","breath caught in","mind raced","a wave of","could feel the weight","unbeknownst to","as if on cue","little did they know","a symphony of","danced across","a beacon of","testament to the"];
+function aiTraceCheck(){
+  const c=proj.chapters[activeChapter];
+  if(!c){ setStatus("studioStatus",`<div class="banner">Open a chapter first.</div>`); return; }
+  const text=c.text; const low=text.toLowerCase();
+  const issues=[];
+  // 1) AI-tell clichés
+  const found=AI_TELLS.filter(p=>low.includes(p));
+  if(found.length) issues.push(`<b>${found.length} AI-tell phrase(s)</b> — consider rewriting: ${found.slice(0,8).map(esc).join(", ")}${found.length>8?"…":""}`);
+  // 2) repeated sentences/near-duplicate lines (padding signal)
+  const sents=text.split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(x=>x.length>25);
+  const seen={}; let dupes=0;
+  sents.forEach(x=>{const k=x.toLowerCase().replace(/[^a-z0-9 ]/g,"").slice(0,60);if(seen[k])dupes++;else seen[k]=1;});
+  if(dupes>0) issues.push(`<b>${dupes} repeated/near-duplicate sentence(s)</b> — possible padding; trim repetition.`);
+  // 3) overused words (filler signal)
+  const words=low.replace(/[^a-z\s]/g," ").split(/\s+/).filter(w=>w.length>6);
+  const wc={}; words.forEach(w=>wc[w]=(wc[w]||0)+1);
+  const over=Object.entries(wc).filter(([w,n])=>n>=6).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  if(over.length) issues.push(`<b>Overused words</b>: ${over.map(([w,n])=>`${esc(w)} (${n}×)`).join(", ")} — vary word choice.`);
+  // 4) very long paragraphs (wall-of-text / padded description)
+  const longP=text.split(/\n{2,}/).filter(p=>p.split(/\s+/).length>180).length;
+  if(longP) issues.push(`<b>${longP} very long paragraph(s)</b> (180+ words) — break up or tighten; long blocks read as padding on serialization sites.`);
+  // 5) adverb-heavy (telly prose)
+  const lyAdv=(low.match(/\b\w+ly\b/g)||[]).length;
+  const totalW=words.length||1;
+  if(lyAdv/Math.max(1,text.split(/\s+/).length) > 0.04) issues.push(`<b>High adverb density</b> (${lyAdv} -ly words) — convert "telling" adverbs into stronger verbs/showing.`);
+
+  const wcTotal=text.split(/\s+/).filter(Boolean).length;
+  let html=`<div class="mini" style="margin-bottom:6px">Pre-publish scan of Ch ${c.n} (${wcTotal} words). This is local guidance to keep your serialization clean — not a verdict.</div>`;
+  if(!issues.length){
+    html+=`<div class="ci2 pass">No obvious AI-trace or padding patterns found. Still give it a personal read before posting.</div>`;
+  } else {
+    html+=issues.map(i=>`<div class="ci2 warn" style="margin-bottom:5px">${i}</div>`).join("");
+    html+=`<div class="mini" style="margin-top:6px">Tip: use <b>Polish</b> (with Humanize on) to fix most of these, then re-check.</div>`;
+  }
+  document.getElementById("fixList").innerHTML=html;
+  document.getElementById("scoreWrap").style.display="block";
+}
+async function auditBook(){
+  if(busy)return; if(proj.chapters.length<2){setStatus("studioStatus",`<div class="banner">Need at least 2 chapters.</div>`);return;}
+  if(!confirm(`Audit all ${proj.chapters.length} chapters? This makes one AI call per chapter and may take a while (and uses quota).`))return;
+  busy=true; document.getElementById("auditBtn").disabled=true;
+  const canon=document.getElementById("canon").value;const glossary=glossaryTerms().join(" / ");
+  const facts=[document.getElementById("deathLog").value,document.getElementById("promiseLog").value,document.getElementById("openMysteriesLog").value].filter(Boolean).join("\n");
+  const all=[];
+  try{
+    for(let i=0;i<proj.chapters.length;i++){
+      const c=proj.chapters[i];
+      document.getElementById("auditList").innerHTML=loadingHtml(`auditing Chapter ${c.n} (${i+1}/${proj.chapters.length})…`);
+      const others=proj.beats.map((b,j)=>j===i?null:`(Ch${j+1}) ${b}`).filter(Boolean).join("\n").slice(0,6000);
+      const sys="You are a meticulous continuity editor. Output ONLY a JSON array, nothing else.";
+      const p=`Find concrete continuity errors in this chapter vs the references (wrong/misspelled names, dead char acting alive, contradicted canon, broken timeline, contradicted earlier facts). Output JSON array (max 4): [{"sev":"high|low","issue":"short description"}]. Empty array if none.\n\nCANON:\n${canon||"(none)"}\nLOCKED SPELLINGS:\n${glossary||"(none)"}\nLOGS:\n${facts||"(none)"}\nOTHER CHAPTER RECAPS:\n${others||"(none)"}\n\nCHAPTER ${c.n}:\n${c.text.slice(0,3500)}`;
+      try{
+        const raw=await callStory(sys,p,500);
+        const arr=JSON.parse(raw.replace(/```json|```/g,"").trim());
+        (arr||[]).forEach(it=>{if(it&&it.issue)all.push({n:c.n,idx:i,sev:(it.sev||"low"),issue:it.issue});});
+      }catch(e){ if(isRateLimit(e.message)){document.getElementById("auditList").innerHTML=`<div class="banner">Rate limit at Ch ${c.n}. Showing what was found so far. Switch engine or wait, then run again.</div>`+renderAudit(all);busy=false;document.getElementById("auditBtn").disabled=false;return;} }
+    }
+    document.getElementById("auditList").innerHTML = all.length
+      ? `<div class="mini" style="margin:6px 0">Audit complete — ${all.length} issue(s) across the book. Open a chapter and use Deep-scan for exact fixes.</div>`+renderAudit(all)
+      : `<div class="ci2 pass">Audit complete — no concrete contradictions found across ${proj.chapters.length} chapters.</div>`;
+  }catch(e){document.getElementById("auditList").innerHTML=`<div class="ci2 fail">Audit failed: ${esc(e.message)}</div>`;}
+  busy=false; document.getElementById("auditBtn").disabled=false;
+}
+function renderAudit(all){
+  const order={high:0,low:1};
+  all.sort((a,b)=>(order[a.sev]-order[b.sev])||a.n-b.n);
+  return all.map(it=>`<div class="ci2 ${it.sev==="high"?"fail":"warn"}" style="margin-bottom:6px"><strong>Ch ${it.n}${it.sev==="high"?" · HIGH":""}:</strong> ${esc(it.issue)} <button class="rbtn" style="margin-left:6px;font-size:11px" onclick="(function(){activeChapter=${it.idx};editing=false;renderStudio();document.getElementById('deepScanTarget').value='${it.idx}';})()">Open</button></div>`).join("");
+}
+
+async function titleForChapter(body,n,inlineTitle){
+  const prevTitles=proj.chapters.map(c=>c.title||"");
+  const recent=prevTitles.slice(-20);
+  const overused=[...new Set(prevTitles.map(_titleFirstWord).filter(Boolean))]
+    .map(w=>({w,c:prevTitles.filter(t=>_titleFirstWord(t)===w).length})).filter(x=>x.c>=2).map(x=>x.w);
+  const isBad=t=>{
+    if(!t)return true;
+    const low=t.toLowerCase();
+    if(prevTitles.some(p=>p.toLowerCase()===low))return true;          // exact repeat
+    if(overused.includes(_titleFirstWord(t)))return true;              // reuses an over-used opener
+    if(t.split(/\s+/).length>6)return true;                            // too long
+    return false;
+  };
+  const sys="You title novel chapters by what actually happens in them. The title must come from a concrete object, line, name, image, or turning point IN the chapter text — never a generic mood word. Length 1 to 6 words. Output ONLY the title: no quotes, no 'Chapter', no number, no punctuation at the end.";
+  const ask=(extra)=>callStory(sys,`Read this chapter and give ONE title drawn from something concrete that occurs in it (an object, action, place, name, or the key turn). 1-6 words; a single strong word is fine if it fits.${extra}\n\nCHAPTER TEXT:\n${body.slice(0,2500)}`,30);
+  let title=_cleanTitle(inlineTitle);
+  // Always prefer a fresh read of the prose unless the inline title is already specific & non-repeating
+  try{
+    if(isBad(title)||!inlineTitle){ title=_cleanTitle(await ask("")); }
+    if(isBad(title)){
+      const avoid=recent.length?` Do NOT reuse any of these or their first word: ${recent.join("; ")}.`:"";
+      const ban=overused.length?` Banned opening words: ${overused.join(", ")}.`:"";
+      title=_cleanTitle(await ask(avoid+ban));
+    }
+  }catch(e){ if(!title)title=`Chapter ${n}`; }
+  if(!title||title.length>70)title=`Chapter ${n}`;
+  return title;
+}
+let _polishPending=null; // {idx, text}
+async function polishChapter(idx){
+  if(busy)return; const c=proj.chapters[idx]; if(!c)return;
+  busy=true; setStatus("studioStatus",loadingHtml(`polishing Chapter ${c.n} — line-editing the prose…`));
+  try{
+    const style=(proj.setup&&proj.setup.style)?proj.setup.style:"";
+    const pov=(proj.setup&&proj.setup.pov)?proj.setup.pov:"third person limited";
+    const voices=parseVoices().slice(0,8).map(v=>`- ${v.name}: ${v.card}`).join("\n");
+    const glossary=glossaryTerms().join(" / ");
+    const sys=`You are a senior line editor for fiction. You improve PROSE QUALITY without changing the story. ${style?"House style: "+style+". ":""}POV: ${pov}.`;
+    const p=`Line-edit the chapter below. You MUST:
+- Keep every plot event, reveal, and beat exactly the same — do NOT add, remove, or reorder events.
+- Keep all character actions, dialogue meaning, and outcomes identical.
+- Keep these proper nouns spelled exactly: ${glossary||"(none)"}.
+${voices?"- Preserve each character's distinct voice:\n"+voices+"\n":""}You SHOULD:
+- Tighten sentences; cut filler, redundancy, and throat-clearing.
+- Replace flat or repeated wording with sharper, more specific language.
+- Strengthen the FIRST line (hook) and the LAST line (closing hook).
+- Vary sentence rhythm; deepen the single strongest emotional or sensory beat.
+- Keep roughly the same length (within ~10%).
+
+Output ONLY the edited chapter prose — no title line, no commentary, no notes.
+
+CHAPTER ${c.n} TEXT:
+${c.text}`;
+    const out=(await callStory(sys,p,Math.min(8000,Math.round(c.text.length/3)+800))).trim().replace(/^##[^\n]*\n/,"").trim();
+    if(!out||out.length<Math.round(c.text.length*0.4)){ setStatus("studioStatus",`<div class="banner">Polish came back too short — kept your original. Try again or switch engine.</div>`); busy=false; return; }
+    _polishPending={idx, text:out};
+    document.getElementById("polishCh").textContent=`(Chapter ${c.n})`;
+    document.getElementById("polishPreview").innerHTML=mdToHtml(out);
+    document.getElementById("polishPanel").style.display="block";
+    document.getElementById("polishPanel").scrollIntoView({behavior:"smooth",block:"center"});
+    setStatus("studioStatus","");
+  }catch(e){
+    setStatus("studioStatus",`<div class="banner">Polish failed: ${esc(e.message)}${isRateLimit(e.message)?" (rate limit — wait or switch engine)":""}</div>`);
+  }
+  busy=false;
+}
+function applyPolish(){
+  if(!_polishPending)return; const {idx,text}=_polishPending; const c=proj.chapters[idx]; if(!c)return;
+  c.text=text;
+  if(proj.beats[idx]) proj.beats[idx]=text.replace(/[#*]/g," ").replace(/\s+/g," ").slice(0,180);
+  _polishPending=null;
+  document.getElementById("polishPanel").style.display="none";
+  save(); renderStudio();
+  setStatus("studioStatus",`<div class="banner ok">Applied the polished version of Chapter ${c.n}.</div>`);
+}
+function discardPolish(){
+  _polishPending=null;
+  document.getElementById("polishPanel").style.display="none";
+  setStatus("studioStatus","");
+}
+async function retitleChapter(idx){
+  if(busy)return; const c=proj.chapters[idx]; if(!c)return;
+  busy=true; setStatus("studioStatus",loadingHtml(`renaming Chapter ${c.n} from its text…`));
+  // hide this chapter's current title from the dedup set so it can be reused if it's actually the best fit
+  const saved=c.title; c.title="";
+  try{
+    const fresh=await titleForChapter(c.text, c.n, "");   // "" = force a fresh read of the prose
+    c.title = fresh && fresh!==`Chapter ${c.n}` ? fresh : saved;
+    if(proj.beats[idx]) proj.beats[idx]=c.text.replace(/[#*]/g," ").replace(/\s+/g," ").slice(0,180);
+    save(); renderStudio();
+    setStatus("studioStatus",`<div class="banner ok">Chapter ${c.n} retitled: “${esc(c.title)}”.</div>`);
+  }catch(e){
+    c.title=saved; renderStudio();
+    setStatus("studioStatus",`<div class="banner">Couldn't retitle: ${esc(e.message)}${isRateLimit(e.message)?" (rate limit — wait or switch engine)":""}</div>`);
+  }
+  busy=false;
+}
+async function writeChapter(){const n=proj.chapters.length+1;proj.bible=document.getElementById("bible").value;proj.canon=document.getElementById("canon").value.trim();proj.goal=document.getElementById("goal").value.trim();proj.cast=document.getElementById("cast").value.trim();proj.outline=document.getElementById("outline").value;const dir=document.getElementById("direction").value.trim();const arc=currentArc(n);const arcLine=arc?`CURRENT ARC (Ch${arc.start}-${arc.end}) - "${arc.title}": ${arc.focus}\n`:"";const targetWords=Math.round((proj.setup.length||1800)/1.45);const words=targetWords;const last=proj.chapters[proj.chapters.length-1];const tail=last?last.text.slice(-700):"";const litrpg=proj.setup.litrpg?" Include occasional LitRPG system notifications as markdown blockquotes.":"";const vaultCtx=buildVaultCtx();const retrievedCtx=retrieveOldContext([dir,proj.goal,arcLine,tail].join(" "));const voiceCtx=voiceCardsFor(dir);const glossaryCtx=glossaryBlock();const phraseCtx=phraseAvoidBlock();const usedTitles=proj.chapters.slice(-15).map(c=>c.title).filter(Boolean);const sc=smartCast(dir);if(dir){if(!proj.notesHistory)proj.notesHistory=[];proj.notesHistory.push({chapter:n,notes:dir});if(proj.notesHistory.length>60)proj.notesHistory=proj.notesHistory.slice(-60);}
+const sys=`You are a master ${proj.setup.genre||""} novelist writing a long-running serialized novel. ${styleGuide()} POV: ${proj.setup.pov||"third person limited"}.
+ABSOLUTE RULES:
+1. Author chapter notes take ABSOLUTE PRIORITY. Follow every beat in order.
+2. ONLY introduce characters explicitly named in the author notes. No others whatsoever.
+3. ONLY write the plot beats listed. No extra scenes no new subplots no additional characters.
+4. Every character must match their roster status exactly. Dead or unaccounted characters cannot appear as alive.
+5. Every world rule in Canon notes must be respected.
+6. Do not recap previous chapters — continue forward.
+7. End on a hook or unresolved wrongness.${litrpg}`;
+const p=`STORY BIBLE:\n${proj.bible}\n\nCANON - NEVER CONTRADICT:\n${proj.canon||"(none set)"}\n${powerSystemGuide()}${genreGuide()}${emotionDirective()}${sceneDirective()}${pacingDirective()}${styleRefBlock()}${humanizeBlock()}\n${vaultCtx}${retrievedCtx}STORY SO FAR (recent recaps):\n${proj.beats.length?recentBeats():"(first chapter)"}\n\n${tail?`HOW THE PREVIOUS CHAPTER ENDED (its last lines):\n${tail}\n${transitionDirective()}\n`:""}\n${arcLine}${proj.goal?`STORY GOAL: ${proj.goal}\n`:""}\nCHARACTER ROSTER - NEVER show dead or unaccounted as alive:\n${sc||"(none set)"}\n${glossaryCtx}${voiceCtx}${phraseCtx}\nAUTHOR CHAPTER NOTES - FOLLOW EXACTLY:\n${dir||"(no notes - follow arc and canon)"}\n\nDO NOT: add characters not in notes; add beats not in notes; contradict canon; show dead characters as alive.\n\nWrite CHAPTER ${n}. LENGTH: aim for about ${words} words, but reach it ONLY through substance — meaningful action, dialogue, conflict, character interiority, and plot progress. NEVER pad to hit a word count: no filler, no repeated information, no lengthy meaningless description, no irrelevant tangents. If the scene's purpose is complete, end the chapter rather than inflating it. Every paragraph must earn its place and move the story or character forward.\nStart with: ## Chapter ${n}: working title\nThen chapter prose.\nThen:\n<<RECAP>> one-sentence recap <<END>>\n<<CAST>>\n- Name | role | current status and key facts\n(max 12 only characters who appeared)\n<<END>>\n<<FACTS>>\n- any NEW permanent world rules or unchangeable facts THIS chapter established that future chapters must never contradict (a death, a vow, a revealed rule of the system, a permanent change). One per line. If none, leave empty.\n<<END>>\n<<THREADS>>\nPLANT: any NEW unresolved thread/mystery/promise this chapter introduces (one per line, short)\nPAYOFF: any earlier planted thread this chapter RESOLVES (one per line, short)\n<<END>>`;
+const raw=await callStory(sys,p,Math.min(8000,Math.round(targetWords*1.9)+900));let recap="";const rm=raw.match(/<<RECAP>>([\s\S]*?)<<END>>/);if(rm)recap=rm[1].trim();const cm=raw.match(/<<CAST>>([\s\S]*?)<<END>>/);if(cm){const existing=parseCast(proj.cast);const aiRows=parseCast(cm[1].trim());const merged=[...existing];aiRows.forEach(ar=>{const idx=merged.findIndex(e=>e.name.toLowerCase()===ar.name.toLowerCase());if(idx>=0)merged[idx]={...merged[idx],...ar};else merged.push(ar);});proj.cast=merged.map(c=>`${c.name} | ${c.role} | ${c.status}${c.facts?" | "+c.facts:""}`).join("\n");document.getElementById("cast").value=proj.cast;}const _nonLinear=sceneIsNonLinear();const fm=raw.match(/<<FACTS>>([\s\S]*?)<<END>>/);if(fm&&!_nonLinear)mergeCanonFacts(fm[1].trim());const thm=raw.match(/<<THREADS>>([\s\S]*?)<<END>>/);if(thm&&!_nonLinear)mergeThreads(thm[1].trim(),n);let body=raw.replace(/<<RECAP>>[\s\S]*?<<END>>/g,"").replace(/<<CAST>>[\s\S]*?<<END>>/g,"").replace(/<<FACTS>>[\s\S]*?<<END>>/g,"").replace(/<<THREADS>>[\s\S]*?<<END>>/g,"").trim();const tm=body.match(/^##\s*Chapter\s*\d+\s*:?\s*(.+)$/im);let inlineTitle=tm?tm[1].trim():"";body=body.replace(/^##\s*Chapter[^\n]*\n/i,"").trim();let title=await titleForChapter(body,n,inlineTitle);if(!recap)recap=body.replace(/[#*]/g," ").slice(0,180);const _st=sceneInfo();if(_st==="flashback")recap="[FLASHBACK] "+recap;else if(_st==="dream")recap="[DREAM] "+recap;else if(_st==="interlude")recap="[INTERLUDE] "+recap;proj.chapters.push({n,title,text:body,scene:_st,pace:proj._suggestedPace||""});proj.beats.push(recap);try{updatePhraseGuard(body);}catch(e){}}
+async function writeOne(){if(busy)return;busy=true;stopFlag=false;document.getElementById("scoreWrap").style.display="none";document.getElementById("contCheckWrap").style.display="none";document.getElementById("writeOne").disabled=true;document.getElementById("autoWrite").disabled=true;setStatus("studioStatus",loadingHtml(`writing chapter ${proj.chapters.length+1}...`));try{await writeChapter();document.getElementById("direction").value="";document.getElementById("sceneType").value="normal";setStatus("studioStatus",`<div class="banner ok">Chapter written. Now: 1) Read it 2) Update Tracker tab 3) Click next chapter in the Chapter Guide below to load notes.</div>`+overdueThreadsBanner());renderStudio();save();renderNotesHist();checkArcTransition();checkBackupReminder();runContinuityCheck(true);scoreConsistency();if(proj.chapters.length%10===0)compressVaultAuto();renderGuide(document.getElementById("guideSearch").value);}catch(e){setStatus("studioStatus",`<div class="banner">${esc(e.message)}${isRateLimit(e.message)?" - Rate limit. Wait and retry.":""}</div>`);}busy=false;document.getElementById("writeOne").disabled=false;document.getElementById("autoWrite").disabled=false;}
+async function autoWrite(){if(busy)return;stopFlag=false;busy=true;document.getElementById("writeOne").disabled=true;document.getElementById("autoWrite").disabled=true;document.getElementById("stop").style.display="inline-block";while(!stopFlag){if(proj.setup.target&&proj.chapters.length>=proj.setup.target)break;setStatus("studioStatus",loadingHtml(`auto-writing chapter ${proj.chapters.length+1}...`));try{await writeChapter();renderStudio();save();renderNotesHist();checkArcTransition();checkBackupReminder();if(proj.chapters.length%10===0)compressVaultAuto();}catch(e){setStatus("studioStatus",`<div class="banner">Paused at ch${proj.chapters.length+1}: ${esc(e.message)}${isRateLimit(e.message)?" - rate limit. Wait then resume.":""}</div>`);break;}await new Promise(r=>setTimeout(r,900));}document.getElementById("stop").style.display="none";busy=false;document.getElementById("writeOne").disabled=false;document.getElementById("autoWrite").disabled=false;}
+function checkBackupReminder(){if(proj.chapters.length-(proj.lastBackupAt||0)>=20)document.getElementById("backupReminder").style.display="block";}
+function dismissBackupReminder(){document.getElementById("backupReminder").style.display="none";}
+function doBackupNow(){proj.lastBackupAt=proj.chapters.length;save();exportJson();dismissBackupReminder();}
+function renderNotesHist(){const hist=proj.notesHistory||[];const el=document.getElementById("notesHist");if(!el)return;if(!hist.length){el.innerHTML=`<em style="color:var(--faint);font-size:12px">Notes used will appear here after each chapter.</em>`;return;}el.innerHTML=hist.slice().reverse().map(h=>`<div class="nentry"><span>Ch${h.chapter}:</span> ${esc(h.notes.slice(0,100))}${h.notes.length>100?"...":""}</div>`).join("");}
+function renderStudio(){const total=proj.chapters.length;const wordCount=proj.chapters.reduce((a,c)=>a+wc(c.text),0);document.getElementById("statline").textContent=`"${proj.title}" - ${total} chapter${total!==1?"s":""}${proj.setup.target?" of "+proj.setup.target:""} - ~${wordCount.toLocaleString()} words`;const list=document.getElementById("chaplist");list.innerHTML=total?proj.chapters.map((c,i)=>`<div class="ci ${i===activeChapter?"active":""}" data-i="${i}"><strong>Ch ${c.n}</strong><br><small>${esc(c.title)} - ${wc(c.text)}w</small></div>`).join(""):`<div class="ci"><small>No chapters yet</small></div>`;const reader=document.getElementById("reader");const c=proj.chapters[activeChapter];if(!c){reader.innerHTML=`<p style="color:var(--faint);font-style:italic">Your chapters will appear here.</p>`;}else if(editing){reader.innerHTML=`<div class="rbar"><input id="editTitle" value="${esc(c.title).replace(/"/g,"&quot;")}" style="max-width:340px"/><span class="spacer"></span><button class="rbtn ok-btn" data-act="save">Save</button><button class="rbtn" data-act="cancel">Cancel</button></div><textarea class="editbox" id="editText">${esc(c.text)}</textarea>`;}else{const isLast=activeChapter===total-1;reader.innerHTML=`<div class="rbar"><button class="rbtn" data-act="prev" ${activeChapter<=0?"disabled":""}>Prev</button><span class="nav">Ch ${c.n} / ${total} - ${wc(c.text)}w</span><button class="rbtn" data-act="next" ${activeChapter>=total-1?"disabled":""}>Next</button><span class="spacer"></span><button class="rbtn" data-act="copy">Copy</button><button class="rbtn" data-act="edit">Edit</button><button class="rbtn" data-act="retitle">Retitle</button><button class="rbtn" data-act="polish">Polish</button>${isLast?`<button class="rbtn" data-act="rewrite">Rewrite</button>`:""}<button class="rbtn danger" data-act="delete">Delete</button></div><h2>Chapter ${c.n}: ${esc(c.title)}${c.scene&&c.scene!=="normal"?` <span class="scene-badge">${esc(c.scene)}</span>`:""}</h2>${mdToHtml(c.text)}`;}document.getElementById("coverWrap").innerHTML=proj.cover?`<img src="${esc(proj.cover)}" alt="cover" referrerpolicy="no-referrer"/>`:""  ;renderVault();}
+function navChapter(d){const t=proj.chapters.length;if(!t)return;activeChapter=Math.max(0,Math.min(t-1,activeChapter+d));editing=false;if(_polishPending){_polishPending=null;const pp=document.getElementById("polishPanel");if(pp)pp.style.display="none";}renderStudio();}
+async function copyChapter(){const c=proj.chapters[activeChapter];if(!c)return;try{await navigator.clipboard.writeText(`Chapter ${c.n}: ${c.title}\n\n${c.text}`);const b=document.querySelector("[data-act=copy]");if(b){const o=b.textContent;b.textContent="Copied";setTimeout(()=>b.textContent=o,1300);}}catch{alert("Select text and copy manually.");}}
+function startEdit(){editing=true;renderStudio();}
+function cancelEdit(){editing=false;renderStudio();}
+function saveEdit(){const c=proj.chapters[activeChapter];if(!c)return;c.title=(document.getElementById("editTitle").value||"").trim()||c.title;c.text=(document.getElementById("editText").value||"").trim();editing=false;renderStudio();save();}
+function deleteChapter(idx){if(busy)return;if(idx==null)idx=activeChapter;const c=proj.chapters[idx];if(!c)return;if(!confirm(`Delete Chapter ${c.n}?`))return;proj.chapters.splice(idx,1);if(idx<proj.beats.length)proj.beats.splice(idx,1);proj.chapters.forEach((ch,i)=>{ch.n=i+1;});activeChapter=proj.chapters.length?Math.min(proj.chapters.length-1,Math.max(0,idx-1)):-1;editing=false;renderStudio();save();}
+function clearAllChapters(){if(busy||!proj.chapters.length)return;if(!confirm("Clear ALL chapters? Bible, canon, characters, arcs and tracker data are kept."))return;proj.chapters=[];proj.beats=[];activeChapter=-1;editing=false;renderStudio();save();}
+async function rewriteLast(){if(busy||!proj.chapters.length)return;if(!confirm("Rewrite the latest chapter?"))return;busy=true;editing=false;document.getElementById("writeOne").disabled=true;document.getElementById("autoWrite").disabled=true;setStatus("studioStatus",loadingHtml("rewriting..."));proj.chapters.pop();proj.beats.pop();try{await writeChapter();setStatus("studioStatus","");}catch(e){setStatus("studioStatus",`<div class="banner">${esc(e.message)}</div>`);}renderStudio();save();busy=false;document.getElementById("writeOne").disabled=false;document.getElementById("autoWrite").disabled=false;}
+function genCover(){proj.bible=document.getElementById("bible").value;const desc=(proj.title+". "+(proj.setup.genre||"")+" book cover art dramatic cinematic no text no letters").replace(/[#*]/g," ").slice(0,400);const url=`https://image.pollinations.ai/prompt/${encodeURIComponent(desc)}?width=600&height=800&nologo=true&seed=${Math.floor(Math.random()*1e6)}&model=flux`;const wrap=document.getElementById("coverWrap");const btn=document.getElementById("genCover");if(btn){btn.disabled=true;btn.dataset._o=btn.textContent;btn.textContent="Generating...";}if(wrap)wrap.innerHTML=loadingHtml("painting cover...");const img=new Image();img.referrerPolicy="no-referrer";img.onload=()=>{proj.cover=url;if(btn){btn.disabled=false;btn.textContent=btn.dataset._o||"Generate cover";}renderStudio();save();};img.onerror=()=>{if(btn){btn.disabled=false;btn.textContent=btn.dataset._o||"Generate cover";}if(wrap)wrap.innerHTML=`<div class="banner">Cover service did not respond. Try again.</div>`;};img.src=url;}
+function uploadCover(file){if(!file)return;if(!/^image\//.test(file.type)){alert("Choose an image file.");return;}const wrap=document.getElementById("coverWrap");if(wrap)wrap.innerHTML=loadingHtml("loading cover...");const fr=new FileReader();fr.onload=(e)=>{const im=new Image();im.onload=()=>{const maxW=768;const scale=Math.min(1,maxW/im.width);const w=Math.round(im.width*scale),h=Math.round(im.height*scale);const cv=document.createElement("canvas");cv.width=w;cv.height=h;cv.getContext("2d").drawImage(im,0,0,w,h);proj.cover=cv.toDataURL("image/jpeg",0.85);renderStudio();save();};im.onerror=()=>{if(wrap)wrap.innerHTML=`<div class="banner">Could not read image.</div>`;};im.src=e.target.result;};fr.onerror=()=>{if(wrap)wrap.innerHTML=`<div class="banner">Could not read file.</div>`;};fr.readAsDataURL(file);}
+function showExtra(label,text){const box=document.getElementById("bibleExtra");box.innerHTML=`<div class="banner ok" style="margin-top:9px"><div style="display:flex;align-items:center;gap:9px;margin-bottom:5px"><strong>${esc(label)}</strong><button class="rbtn" id="copyExtra">Copy</button></div><div style="white-space:pre-wrap;font-style:normal">${esc(text)}</div></div>`;document.getElementById("copyExtra").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(text);const b=document.getElementById("copyExtra");b.textContent="Copied";setTimeout(()=>b.textContent="Copy",1300);}catch{}});}
+async function genTitle(){if(busy)return;proj.bible=document.getElementById("bible").value;if(!proj.bible.trim()){document.getElementById("bibleExtra").innerHTML=`<div class="banner">Build story bible first.</div>`;return;}busy=true;const btn=document.getElementById("genTitle");btn.disabled=true;const o=btn.textContent;btn.textContent="Thinking...";try{showExtra("Title ideas",await callStory("You are a bestselling web-serial title strategist. No explanations.",`From this story bible give 8 original title options. Output ONLY a numbered list.\n\n${proj.bible}`,500));}catch(e){document.getElementById("bibleExtra").innerHTML=`<div class="banner">${esc(e.message)}</div>`;}busy=false;btn.disabled=false;btn.textContent=o;}
+async function genSynopsis(){if(busy)return;proj.bible=document.getElementById("bible").value;if(!proj.bible.trim()){document.getElementById("bibleExtra").innerHTML=`<div class="banner">Build story bible first.</div>`;return;}busy=true;const btn=document.getElementById("genSynopsis");btn.disabled=true;const o=btn.textContent;btn.textContent="Writing...";try{showExtra("Synopsis",await callStory("You are a web-novel blurb specialist. 110-170 words one punchy hook sell the question not the plot end on threat or promise.",`Write a synopsis.\n\n${proj.bible}`,700));}catch(e){document.getElementById("bibleExtra").innerHTML=`<div class="banner">${esc(e.message)}</div>`;}busy=false;btn.disabled=false;btn.textContent=o;}
+function download(name,content,type){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);}
+function exportMd(){let md=`# ${proj.title}\n\n`;proj.chapters.forEach(c=>{md+=`\n\n## Chapter ${c.n}: ${c.title}\n\n${c.text}\n`;});download((proj.title||"webnovel").replace(/[^a-z0-9]+/gi,"_")+".md",md,"text/markdown");}
+function exportJson(){syncTracker();download((proj.title||"webnovel").replace(/[^a-z0-9]+/gi,"_")+"_backup.json",JSON.stringify(proj,null,2),"application/json");}
+function importJson(file){const fr=new FileReader();fr.onload=()=>{try{proj={...newProject(),...JSON.parse(fr.result)};hydrate();save();refreshProjectBar();}catch(e){alert("Could not read project file.");}};fr.readAsText(file);}
+
+/* ===== IMPORT PUBLISHED CHAPTERS (paste-in) ===== */
+function parsePastedChapters(text){
+  if(!text||!text.trim())return [];
+  let blocks;
+  // Prefer splitting on a line that is only === (3+ equals)
+  if(/^\s*={3,}\s*$/m.test(text)){
+    blocks=text.split(/^\s*={3,}\s*$/m);
+  } else if(/^\s*##\s*Chapter\b/im.test(text)){
+    // split before each "## Chapter" heading, keep the heading with its block
+    blocks=text.split(/(?=^\s*##\s*Chapter\b)/im);
+  } else {
+    // last resort: split on 3+ blank lines
+    blocks=text.split(/\n\s*\n\s*\n+/);
+  }
+  return blocks.map(b=>b.trim()).filter(Boolean).map(b=>{
+    let title="", body=b;
+    const hm=b.match(/^\s*##\s*Chapter\s*\d*\s*:?\s*(.+)$/im);
+    if(hm){ title=hm[1].trim(); body=b.replace(/^\s*##\s*Chapter[^\n]*\n?/i,"").trim(); }
+    else {
+      // try a bare "Chapter N: Title" first line
+      const fm=b.match(/^\s*Chapter\s*\d*\s*:?\s*(.+)$/i);
+      if(fm){ title=fm[1].trim(); body=b.replace(/^\s*Chapter[^\n]*\n?/i,"").trim(); }
+    }
+    if(!title) title = (body.split("\n")[0]||"Untitled").replace(/[#*]/g,"").slice(0,60).trim()||"Untitled";
+    return { title, text: body };
+  }).filter(c=>c.text);
+}
+
+async function doImportChapters(){
+  if(busy) return;
+  const text=document.getElementById("importText").value;
+  const startN=Math.max(1, parseInt(document.getElementById("importStartN").value,10)||1);
+  const parsed=parsePastedChapters(text);
+  if(!parsed.length){ setStatus("importStatus",`<div class="banner">Nothing parsed. Separate chapters with a line containing only === , or start each with "## Chapter N: Title".</div>`); return; }
+  if(!confirm(`Import ${parsed.length} chapter(s)? This REPLACES the current ${proj.chapters.length} chapter(s) in this project. (Bible, canon, characters, arcs, vault are kept.)`)) return;
+
+  busy=true; document.getElementById("doImport").disabled=true;
+  // Build chapter list with sequential numbering from startN
+  proj.chapters = parsed.map((c,i)=>({ n:startN+i, title:c.title, text:c.text }));
+  // Reset derived memory that must match the new chapter set
+  proj.beats = parsed.map(c=> c.text.replace(/[#*]/g," ").replace(/\s+/g," ").slice(0,180));
+  proj.vault = [];               // vault will be rebuilt by compress as needed
+  activeChapter = proj.chapters.length-1;
+  renderStudio(); save();
+
+  const rebuild=document.getElementById("importRebuild").checked;
+  if(rebuild){
+    try{
+      setStatus("importStatus",loadingHtml("rebuilding recaps & cast from imported chapters…"));
+      // 1) accurate one-line recaps per chapter
+      for(let i=0;i<proj.chapters.length;i++){
+        const c=proj.chapters[i];
+        setStatus("importStatus",loadingHtml(`summarising chapter ${c.n} (${i+1}/${proj.chapters.length})…`));
+        try{
+          const r=await callStory("You write one-sentence factual chapter recaps. Output ONLY the sentence.",`Recap this chapter in ONE sentence (key events only):\n\n${c.text.slice(0,3000)}`,120);
+          if(r) proj.beats[i]=r.trim();
+        }catch(e){ if(isRateLimit(e.message)){ setStatus("importStatus",`<div class="banner">Rate limit while summarising at Ch ${c.n}. Chapters are imported; recaps stopped here. Switch engine or wait, then run "Import" again with rebuild on to finish.</div>`); busy=false; document.getElementById("doImport").disabled=false; save(); return; } }
+      }
+      // 2) cumulative cast ledger from the whole imported run
+      setStatus("importStatus",loadingHtml("building the character roster…"));
+      const joined=proj.chapters.map(c=>`## Chapter ${c.n}: ${c.title}\n${c.text.slice(0,1500)}`).join("\n\n").slice(0,18000);
+      try{
+        const castOut=await callStory("You are a story continuity expert. Output ONLY roster lines, nothing else.",`From these chapters, build the current character roster. One line per character, EXACTLY:\nName | role | current status (alive/dead/unaccounted + where they are) | key facts\nMark anyone who died or vanished accordingly. Max 20 lines.\n\n${joined}`,1200);
+        if(castOut){ const cleaned=castOut.split("\n").filter(l=>l.includes("|")).join("\n"); if(cleaned){ proj.cast=cleaned; document.getElementById("cast").value=cleaned; } }
+      }catch(e){}
+      // 3) compress older chapters into the vault so long-range memory is populated
+      try{ await compressVault(false); }catch(e){}
+      save(); renderStudio();
+      setStatus("importStatus",`<div class="banner ok">Imported ${proj.chapters.length} chapters and rebuilt recaps + cast. Memory is caught up. Review the Characters field, then continue from Chapter ${proj.chapters[proj.chapters.length-1].n+1}.</div>`);
+    }catch(e){
+      setStatus("importStatus",`<div class="banner">Chapters imported, but rebuild failed: ${esc(e.message)}. You can edit Characters manually.</div>`);
+    }
+  } else {
+    setStatus("importStatus",`<div class="banner ok">Imported ${proj.chapters.length} chapters (recaps are rough auto-clips). Tip: turn on "Auto-rebuild" for accurate memory.</div>`);
+  }
+  busy=false; document.getElementById("doImport").disabled=false;
+}
+
+function hydrate(){const s=proj.setup||{};document.getElementById("idea").value=s.idea||"";document.getElementById("genre").value=s.genre||"";document.getElementById("tone").value=s.tone||"";if(s.pov)document.getElementById("pov").value=s.pov;if(s.length)document.getElementById("length").value=String(s.length);if(s.target)document.getElementById("target").value=s.target;if(s.style)document.getElementById("style").value=s.style;if(s.powerSystem)document.getElementById("powerSystem").value=s.powerSystem;updatePowerHint();document.getElementById("litrpg").checked=!!s.litrpg;document.getElementById("bible").value=proj.bible||"";document.getElementById("canon").value=proj.canon||"";document.getElementById("goal").value=proj.goal||"";document.getElementById("cast").value=proj.cast||"";document.getElementById("outline").value=proj.outline||"";document.getElementById("erosionLog").value=proj.erosionLog||"";document.getElementById("promiseLog").value=proj.promiseLog||"";document.getElementById("deathLog").value=proj.deathLog||"";document.getElementById("openMysteriesLog").value=proj.openMysteriesLog||"";document.getElementById("voices").value=proj.voices||"";document.getElementById("glossary").value=proj.glossary||"";document.getElementById("styleRef").value=proj.styleRef||"";document.getElementById("humanize").checked=proj.humanize!==false;if(proj.emotion)document.getElementById("emotion").value=proj.emotion;if(proj.bible){["biblePanel","studioPanel","guidePanel"].forEach(id=>document.getElementById(id).style.display="block");}activeChapter=proj.chapters.length-1;renderStudio();renderNotesHist();checkArcTransition();renderGuide();}
+document.querySelectorAll(".tab-btn").forEach(btn=>{btn.addEventListener("click",()=>{const tab=btn.dataset.tab;document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));document.querySelectorAll(".tab-pane").forEach(c=>c.classList.remove("active"));btn.classList.add("active");document.getElementById(tab).classList.add("active");if(tab==="t-designs")renderDesigns();});});
+document.getElementById("buildBible").addEventListener("click",buildBible);document.getElementById("powerSystem").addEventListener("change",updatePowerHint);renderGenreChips();document.getElementById("genreChips").addEventListener("click",e=>{const c=e.target.closest("[data-genre]");if(!c)return;const g=c.dataset.genre;const cur=document.getElementById("genre").value.trim();const has=cur.toLowerCase().includes(g.toLowerCase().split(/[\/ ]+/)[0]);document.getElementById("genre").value=has?cur:(cur?cur+", "+g:g);renderGenreChips();});document.getElementById("genre").addEventListener("input",renderGenreChips);document.getElementById("bookshelfBtn").addEventListener("click",openShelf);document.getElementById("shelfClose").addEventListener("click",closeShelf);document.getElementById("shelfGrid").addEventListener("click",e=>{const nb=e.target.closest("[data-newbook]");if(nb){closeShelf();createProject();return;}const b=e.target.closest("[data-open]");if(b){const id=b.dataset.open;closeShelf();if(id!==curId)switchProject(id);}});document.getElementById("emotion").addEventListener("change",()=>{proj.emotion=document.getElementById("emotion").value;save();});
+document.getElementById("writeOne").addEventListener("click",writeOne);
+document.getElementById("autoWrite").addEventListener("click",autoWrite);
+document.getElementById("stop").addEventListener("click",()=>{stopFlag=true;});
+document.getElementById("genCover").addEventListener("click",genCover);
+document.getElementById("uploadCoverBtn").addEventListener("click",()=>document.getElementById("coverFile").click());
+document.getElementById("coverFile").addEventListener("change",(e)=>{const f=e.target.files&&e.target.files[0];uploadCover(f);e.target.value="";});
+document.getElementById("planArcs").addEventListener("click",planArcs);
+document.getElementById("exportMd").addEventListener("click",exportMd);
+document.getElementById("exportJson").addEventListener("click",()=>{proj.lastBackupAt=proj.chapters.length;save();exportJson();dismissBackupReminder();});
+document.getElementById("importBtn").addEventListener("click",()=>document.getElementById("importFile").click());
+document.getElementById("importFile").addEventListener("change",e=>{if(e.target.files[0])importJson(e.target.files[0]);});
+document.getElementById("importChaps").addEventListener("click",()=>{const p=document.getElementById("importPanel");const showing=p.style.display!=="none";p.style.display=showing?"none":"block";if(!showing){document.getElementById("importStartN").value=(proj.chapters.length?proj.chapters[proj.chapters.length-1].n+1:1)>1?1:1;setStatus("importStatus","");p.scrollIntoView({behavior:"smooth",block:"center"});}});
+document.getElementById("doImport").addEventListener("click",doImportChapters);
+document.getElementById("cancelImport").addEventListener("click",()=>{document.getElementById("importPanel").style.display="none";});
+document.getElementById("newProj").addEventListener("click",()=>{if(confirm("Start new project?"))createProject();});
+document.getElementById("checkContinuity").addEventListener("click",()=>runContinuityCheck(true));
+document.getElementById("compressVault").addEventListener("click",()=>compressVault(true));
+document.getElementById("clearVault").addEventListener("click",clearVault);
+document.getElementById("deepScanBtn").addEventListener("click",deepScan);document.getElementById("auditBtn").addEventListener("click",auditBook);document.getElementById("aiCheckBtn").addEventListener("click",aiTraceCheck);document.getElementById("genVoices").addEventListener("click",genVoices);document.getElementById("genGlossary").addEventListener("click",genGlossary);document.getElementById("humanize").addEventListener("change",()=>{proj.humanize=document.getElementById("humanize").checked;save();});document.getElementById("dlCover").addEventListener("click",downloadCover);document.getElementById("designAll").addEventListener("click",designAll);document.getElementById("designGrid").addEventListener("click",e=>{const b=e.target.closest("[data-design]");if(b)designOne(b.dataset.design);});document.getElementById("applyPolish").addEventListener("click",applyPolish);document.getElementById("discardPolish").addEventListener("click",discardPolish);
+document.getElementById("fixList").addEventListener("click",e=>{const b=e.target.closest("[data-fix]");if(b)applyFix(+b.dataset.fix);});
+document.getElementById("backupNow").addEventListener("click",doBackupNow);
+document.getElementById("dismissBackup").addEventListener("click",dismissBackupReminder);
+document.getElementById("chaplist").addEventListener("click",e=>{const ci=e.target.closest("[data-i]");if(ci){activeChapter=+ci.dataset.i;editing=false;renderStudio();}});
+document.getElementById("reader").addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act;if(a==="prev")navChapter(-1);else if(a==="next")navChapter(1);else if(a==="copy")copyChapter();else if(a==="edit")startEdit();else if(a==="save")saveEdit();else if(a==="cancel")cancelEdit();else if(a==="rewrite")rewriteLast();else if(a==="delete")deleteChapter(activeChapter);else if(a==="retitle")retitleChapter(activeChapter);else if(a==="polish")polishChapter(activeChapter);});
+["canon","goal","cast","outline"].forEach(id=>{document.getElementById(id).addEventListener("change",()=>{proj[id]=document.getElementById(id).value;save();});});
+["erosionLog","promiseLog","deathLog","openMysteriesLog","voices","glossary","styleRef"].forEach(id=>{document.getElementById(id).addEventListener("change",()=>{syncTracker();save();});});
+document.getElementById("backendurl").addEventListener("change",()=>{proj._backend=backendBase();save();});
+document.getElementById("genTitle").addEventListener("click",genTitle);
+document.getElementById("genSynopsis").addEventListener("click",genSynopsis);
+document.getElementById("clearChaps").addEventListener("click",clearAllChapters);
+document.getElementById("newProjTop").addEventListener("click",createProject);
+document.getElementById("renameProj").addEventListener("click",renameProject);
+document.getElementById("delProj").addEventListener("click",deleteProject);
+document.getElementById("projSelect").addEventListener("change",e=>{switchProject(e.target.value);});
+document.getElementById("guideSearch").addEventListener("input",e=>renderGuide(e.target.value));
+if(load()){if(proj._backend)document.getElementById("backendurl").value=proj._backend;hydrate();}else{curId=newId();save();}
+refreshProjectBar();
+</script>
