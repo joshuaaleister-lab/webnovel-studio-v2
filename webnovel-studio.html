@@ -79,6 +79,17 @@ textarea{resize:vertical;}
 .reader p{margin:0 0 13px;}
 .cover img{width:100%;max-width:300px;border-radius:5px;border:1px solid var(--line);display:block;margin:0 auto 8px;}
 .statline{font-family:'Fraunces',serif;font-style:italic;color:var(--muted);font-size:14px;margin:4px 0 10px;}
+.sb-wrap{margin:2px 0 14px;}
+.sb-cap{font-size:12.5px;color:var(--muted);margin-bottom:5px;font-style:italic;}
+.sb-cap b{color:var(--gold-2);font-style:normal;}
+.sb-track{position:relative;display:flex;gap:2px;height:22px;border-radius:4px;overflow:hidden;}
+.sb-seg{background:rgba(216,169,78,.06);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden;min-width:0;transition:background .2s;}
+.sb-seg span{font-size:9px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);white-space:nowrap;padding:0 4px;overflow:hidden;text-overflow:ellipsis;}
+.sb-seg.done{background:rgba(216,169,78,.10);}
+.sb-seg.done span{color:var(--muted);}
+.sb-seg.active{background:linear-gradient(180deg,rgba(216,169,78,.28),rgba(216,169,78,.14));border-color:var(--gold);}
+.sb-seg.active span{color:var(--gold-2);font-weight:600;}
+.sb-marker{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--crimson);box-shadow:0 0 6px var(--crimson);pointer-events:none;}
 @media(max-width:680px){.studio{grid-template-columns:1fr;}.chaplist{max-height:26vh;}
 
 /* ===== MOBILE POLISH ===== */
@@ -296,6 +307,25 @@ h1{font-size:26px;}
       <span class="mini" id="powerHint" style="line-height:1.4"></span>
     </div>
   </div>
+  <div class="row" style="margin-top:9px">
+    <div><label class="label" for="structure">Story structure <span style="font-weight:400;color:var(--faint);font-size:12px">— a proven skeleton your story follows, adapted to your premise (never a copy)</span></label>
+      <select id="structure">
+        <option value="none" selected>None / free-form</option>
+        <option value="three_act">Three-Act (setup · confrontation · resolution)</option>
+        <option value="hero">Hero's Journey (call · trials · transformation · return)</option>
+        <option value="save_cat">Save the Cat (15-beat commercial arc)</option>
+        <option value="seven_point">Seven-Point (hook → pinch → midpoint → pinch → resolution)</option>
+        <option value="kishotenketsu">Kishōtenketsu (ki · shō · ten · ketsu — Asian 4-act)</option>
+        <option value="cultivation_climb">Cultivation Climb (humble start → realm breakthroughs → ascension)</option>
+        <option value="revenge_cycle">Revenge Cycle (wound → resolve → ascent → reckoning → cost)</option>
+        <option value="tournament">Tournament/Trial Arc (qualify → rivals → setback → triumph → fallout)</option>
+        <option value="tragedy">Tragic Arc (rise → flaw → fall → recognition)</option>
+        <option value="mystery_spiral">Mystery Spiral (clue → theory → reversal → deeper question)</option>
+      </select></div>
+    <div style="display:flex;align-items:flex-end">
+      <span class="mini" id="structureHint" style="line-height:1.4"></span>
+    </div>
+  </div>
   <div class="toolbar"><button class="btn btn-primary" id="buildBible">Build the story bible</button></div>
   <div id="setupStatus"></div>
 </div>
@@ -317,6 +347,7 @@ h1{font-size:26px;}
 
 <div class="panel" id="studioPanel" style="display:none">
   <div class="statline" id="statline"></div>
+  <div id="structureBar" class="sb-wrap" style="display:none"></div>
   <div id="arcAlert"></div>
 
   <details class="cont" open>
@@ -325,6 +356,7 @@ h1{font-size:26px;}
       <button class="tab-btn active" data-tab="t-canon">Canon</button>
       <button class="tab-btn" data-tab="t-chars">Characters</button>
       <button class="tab-btn" data-tab="t-arcs">Arcs</button>
+      <button class="tab-btn" data-tab="t-depth">Depth</button>
       <button class="tab-btn" data-tab="t-tracker">Tracker</button>
       <button class="tab-btn" data-tab="t-voices">Voices</button>
       <button class="tab-btn" data-tab="t-glossary">Glossary</button>
@@ -349,6 +381,23 @@ h1{font-size:26px;}
       <textarea id="outline" rows="5" placeholder="1-40 | The Unaccounted | What is No. 15 and what does it want with Crane?"></textarea>
       <div class="toolbar"><button class="btn btn-ghost" id="planArcs">Plan arcs automatically</button></div>
       <div id="planStatus"></div>
+      <label class="label" for="tentpoles" style="font-size:14px;margin-top:16px">Major turning points <span style="font-weight:400;color:var(--faint);font-size:12px">— the tentpole events the story drives toward, pinned to chapters</span></label>
+      <div class="mini" style="margin-bottom:8px">Fixes the saggy middle: with concrete turns pinned to chapter numbers (inciting incident, midpoint reversal, all-is-lost, climax), auto-write always builds toward the next one instead of marking time. Format: <b>chapter | the concrete event</b>, one per line.</div>
+      <textarea id="tentpoles" rows="6" placeholder="12 | Crane confirms No.15 is real and is seen entering it&#10;48 | Midpoint reversal: the bureau was hiding No.15, not hunting it&#10;82 | All is lost: Crane's own name is struck from the ledger&#10;98 | Climax: Crane forces the reckoning at No.15&#10;100 | Resolution: the street remembers him — or chooses not to"></textarea>
+      <div class="toolbar" style="margin-top:8px"><button class="btn btn-ghost" id="planTentpoles">Pin turning points automatically</button></div>
+      <div id="tentStatus"></div>
+    </div>
+    <div class="tab-pane" id="t-depth">
+      <label class="label" for="coreChars" style="font-size:14px">Character cores — what drives each character</label>
+      <div class="mini" style="margin-bottom:8px">The engine of a real arc: each major character's <b>want</b> (external goal), <b>need</b> (what they truly lack), <b>flaw</b>, and the <b>lie</b> they believe. Fed in so characters <i>develop</i>, not just stay consistent. One per line.</div>
+      <textarea id="coreChars" rows="6" placeholder="Aldous Crane | WANT: prove No.15 is real | NEED: to be remembered/to matter | FLAW: buries feeling in procedure | LIE: 'if I account for everything, nothing can hurt me'"></textarea>
+      <div class="toolbar" style="margin-top:8px"><button class="btn btn-ghost" id="genCores">Draft cores from the bible &amp; cast</button></div>
+      <div id="coreStatus"></div>
+
+      <label class="label" for="stakes" style="font-size:14px;margin-top:16px">Stakes &amp; tension — what's at risk right now</label>
+      <div class="mini" style="margin-bottom:8px">Fights the mid-novel sag. State the <b>current</b> central stake; the AI keeps tension from plateauing and escalates over the arc. Update it as the story turns.</div>
+      <textarea id="stakes" rows="3" placeholder="e.g. If Crane keeps digging, the bureau will erase HIM next — and he's starting to suspect his own name was already struck once."></textarea>
+      <label class="ck" style="margin-top:8px;display:block"><input type="checkbox" id="escalate" checked /> Escalation guard — push stakes higher over time; avoid filler/nothing-happened chapters</label>
     </div>
     <div class="tab-pane" id="t-tracker">
       <label class="label" style="font-size:14px">Series tracker</label>
@@ -360,6 +409,10 @@ h1{font-size:26px;}
       <textarea id="deathLog" rows="3" placeholder="Ch14: The eroded Reckoner — UNACCOUNTED"></textarea>
       <label class="label" for="openMysteriesLog" style="font-size:13px;margin-top:8px">Open mysteries</label>
       <textarea id="openMysteriesLog" rows="3" placeholder="[OPEN] What spoke from No.15?"></textarea>
+      <label class="label" for="storyStateBox" style="font-size:13px;margin-top:12px">Live story state <span style="font-weight:400;color:var(--faint);font-size:12px">— auto-updated each chapter; carried forward so details don't drift</span></label>
+      <textarea id="storyStateBox" rows="3" placeholder="Auto-filled after each chapter: location, in-world time, who's present, injuries/conditions, immediate goal. You can edit it."></textarea>
+      <label class="label" for="arcStagesBox" style="font-size:13px;margin-top:8px">Character arc stages <span style="font-weight:400;color:var(--faint);font-size:12px">— auto-tracked so characters actually change</span></label>
+      <textarea id="arcStagesBox" rows="3" placeholder="Auto-filled after each chapter: each major character's current inner arc stage. You can edit it."></textarea>
     </div>
     <div class="tab-pane" id="t-voices">
       <label class="label" for="voices" style="font-size:14px">Character voice cards — Name | speech pattern, vocabulary, tics, attitude</label>
@@ -461,6 +514,7 @@ h1{font-size:26px;}
     </div>
   </div>
 
+  <label class="ck" style="margin-top:10px;display:block"><input type="checkbox" id="architect" checked /> 🧭 Story Architect — plan each chapter (purpose · beats · hook) before writing. Makes auto-write <b>author</b> instead of drift. Leave your notes blank to let it plan; type notes to override.</label>
   <div class="toolbar" style="margin-top:10px">
     <button class="btn btn-primary" id="writeOne">Write next chapter</button>
     <button class="btn btn-ghost" id="autoWrite">Auto-write</button>
@@ -537,7 +591,7 @@ h1{font-size:26px;}
    LICENSE GATE — Gumroad license-key verification
    Paste your Gumroad PRODUCT ID (shown under the license-key checkbox) below.
    ============================================================ */
-const GUMROAD_PRODUCT_ID = "YOUR_PRODUCT_ID_HERE";   // <-- paste the Product ID from Gumroad (shown under the license-key checkbox)
+const GUMROAD_PRODUCT_PERMALINK = "hlxvcm";   // your product permalink — the code in gumroad.com/l/XXXX (no hunting for a numeric ID needed)
 const GUMROAD_BUY_URL    = "https://gumroad.com/l/hlxvcm";   // your product page (works as-is; or use your full custom URL)
 const LIC_KEY_STORE     = "wns-license-key";
 const LIC_OK_STORE      = "wns-license-ok";
@@ -549,8 +603,14 @@ function gateMsg(t,cls){ const m=_gate("gateMsg"); m.textContent=t||""; m.classN
 
 async function verifyLicense(key){
   // Gumroad license verification endpoint (no secret needed; increments uses unless told not to)
-  const body=new URLSearchParams({ product_id: GUMROAD_PRODUCT_ID, license_key: key.trim(), increment_uses_count: "false" });
-  const r=await fetch("https://api.gumroad.com/v2/licenses/verify",{ method:"POST", headers:{ "Content-Type":"application/x-www-form-urlencoded" }, body });
+  const body=new URLSearchParams({ product_permalink: GUMROAD_PRODUCT_PERMALINK, license_key: key.trim(), increment_uses_count: "false" });
+  let r;
+  try{
+    r=await fetch("https://api.gumroad.com/v2/licenses/verify",{ method:"POST", headers:{ "Content-Type":"application/x-www-form-urlencoded" }, body });
+  }catch(netErr){
+    // No connection / Gumroad unreachable — NOT a rejection. Flag it so a previously-verified key isn't locked out offline.
+    const e=new Error("Couldn't reach the license server. Check your connection."); e.network=true; throw e;
+  }
   const d=await r.json();
   if(!d || d.success!==true) throw new Error((d&&d.message)||"Invalid license key.");
   // reject refunded / disputed / cancelled subscriptions
@@ -588,7 +648,9 @@ async function initGate(){
     gateMsg("Verifying your license…");
     try{ await verifyLicense(stored); showApp(); return; }
     catch(e){
-      // stored key no longer valid — clear it and require re-entry
+      // Offline / server unreachable is NOT a rejection: if this key already verified once, let the paid user keep working.
+      if(e.network){ try{ if(localStorage.getItem(LIC_OK_STORE)==="1"){ showApp(); return; } }catch(_){} }
+      // stored key genuinely invalid (refunded/revoked) — clear it and require re-entry
       try{ localStorage.removeItem(LIC_OK_STORE); }catch(_){}
       gateMsg(e.message||"Your saved license is no longer valid. Please re-enter.","err");
       _gate("gateKey").value=stored;
@@ -1026,7 +1088,7 @@ Update Story arcs to mark Arc 1 complete`}
 ];
 
 let proj=newProject(),busy=false,stopFlag=false,activeChapter=-1,editing=false;
-function newProject(){return{setup:{},title:"Untitled",bible:"",chapters:[],beats:[],cover:"",canon:"",goal:"",cast:"",outline:"",erosionLog:"",promiseLog:"",deathLog:"",openMysteriesLog:"",notesHistory:[],vault:[],lastBackupAt:0,completedGuideChapters:[],voices:"",glossary:"",phrases:[],designs:{},guide:[],styleRef:"",humanize:true};}
+function newProject(){return{setup:{},title:"Untitled",bible:"",chapters:[],beats:[],cover:"",canon:"",goal:"",cast:"",outline:"",erosionLog:"",promiseLog:"",deathLog:"",openMysteriesLog:"",notesHistory:[],vault:[],lastBackupAt:0,completedGuideChapters:[],voices:"",glossary:"",phrases:[],designs:{},guide:[],styleRef:"",humanize:true,coreChars:"",stakes:"",escalate:true,structure:"none",tentpoles:"",storyState:"",arcStages:"",architect:true};}
 function backendBase(){return(document.getElementById("backendurl").value||"").trim().replace(/\/+$/,"");}
 function provider(){const v=document.getElementById("mode").value;return v==="hybrid"?"claude":v;}
 function isRateLimit(m){return /quota|exceed|rate|429|RESOURCE_EXHAUSTED|limit: 0/i.test(m||"");}
@@ -1041,12 +1103,12 @@ function newId(){return"p"+Date.now().toString(36)+Math.random().toString(36).sl
 function getIndex(){try{return JSON.parse(localStorage.getItem(IDX))||[];}catch{return[];}}
 function setIndex(l){try{localStorage.setItem(IDX,JSON.stringify(l));}catch{}}
 function projLabel(p){return(p&&(p.name||p.title))||"Untitled";}
-function syncTracker(){proj.erosionLog=document.getElementById("erosionLog").value;proj.promiseLog=document.getElementById("promiseLog").value;proj.deathLog=document.getElementById("deathLog").value;proj.openMysteriesLog=document.getElementById("openMysteriesLog").value;}
+function syncTracker(){proj.erosionLog=document.getElementById("erosionLog").value;proj.promiseLog=document.getElementById("promiseLog").value;proj.deathLog=document.getElementById("deathLog").value;proj.openMysteriesLog=document.getElementById("openMysteriesLog").value;const _t=document.getElementById("tentpoles");if(_t)proj.tentpoles=_t.value;const _s=document.getElementById("storyStateBox");if(_s)proj.storyState=_s.value;const _a=document.getElementById("arcStagesBox");if(_a)proj.arcStages=_a.value;}
 function save(){if(!curId)curId=newId();syncTracker();try{localStorage.setItem("wns-proj-"+curId,JSON.stringify(proj));}catch(e){}const list=getIndex();const i=list.findIndex(x=>x.id===curId);const entry={id:curId,title:projLabel(proj),cover:proj.cover||"",chapters:(proj.chapters||[]).length,genre:(proj.setup&&proj.setup.genre)||"",updated:Date.now()};if(i>=0)list[i]=entry;else list.push(entry);setIndex(list);try{localStorage.setItem(CUR,curId);}catch{}}
 function loadProject(id){try{const s=localStorage.getItem("wns-proj-"+id);if(s){proj={...newProject(),...JSON.parse(s)};curId=id;localStorage.setItem(CUR,id);return true;}}catch(e){}return false;}
 function load(){let list=getIndex();if(list.length===0){let legacy=null;try{legacy=JSON.parse(localStorage.getItem("webnovel-studio-project-v1"));}catch{}if(legacy&&(legacy.bible||(legacy.chapters&&legacy.chapters.length))){curId=newId();proj={...newProject(),...legacy};try{localStorage.setItem("wns-proj-"+curId,JSON.stringify(proj));}catch{}list=[{id:curId,title:projLabel(proj)}];setIndex(list);try{localStorage.setItem(CUR,curId);}catch{}return true;}return false;}const want=localStorage.getItem(CUR);const id=(want&&list.some(x=>x.id===want))?want:list[0].id;return loadProject(id);}
 function refreshProjectBar(){const sel=document.getElementById("projSelect");if(!sel)return;const list=getIndex();sel.innerHTML=list.map(x=>`<option value="${esc(x.id)}" ${x.id===curId?"selected":""}>${esc(x.title||"Untitled")}</option>`).join("")||`<option>No projects</option>`;}
-function blankUI(){["idea","genre","tone","target","bible","direction","canon","goal","cast","outline","erosionLog","promiseLog","deathLog","openMysteriesLog"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});const be=document.getElementById("bibleExtra");if(be)be.innerHTML="";["biblePanel","studioPanel","guidePanel"].forEach(id=>document.getElementById(id).style.display="none");}
+function blankUI(){["idea","genre","tone","target","bible","direction","canon","goal","cast","outline","erosionLog","promiseLog","deathLog","openMysteriesLog","tentpoles","storyStateBox","arcStagesBox"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});const be=document.getElementById("bibleExtra");if(be)be.innerHTML="";["biblePanel","studioPanel","guidePanel"].forEach(id=>document.getElementById(id).style.display="none");}
 function openShelf(){
   save();
   const list=getIndex().slice().sort((a,b)=>(b.updated||0)-(a.updated||0));
@@ -1069,8 +1131,8 @@ function switchProject(id){if(id===curId)return;save();if(loadProject(id)){blank
 function createProject(){save();proj=newProject();curId=newId();blankUI();save();refreshProjectBar();}
 function renameProject(){const n=prompt("Name:",projLabel(proj));if(n==null)return;proj.name=n.trim()||proj.title||"Untitled";save();refreshProjectBar();}
 function deleteProject(){const list=getIndex();if(list.length<=1){if(!confirm("Delete this project?"))return;}else if(!confirm(`Delete "${projLabel(proj)}"?`))return;try{localStorage.removeItem("wns-proj-"+curId);}catch{}const rest=getIndex().filter(x=>x.id!==curId);setIndex(rest);if(rest.length){loadProject(rest[0].id);blankUI();hydrate();}else{proj=newProject();curId=newId();blankUI();save();}refreshProjectBar();}
-function readSetup(){proj.setup={idea:document.getElementById("idea").value.trim(),genre:document.getElementById("genre").value.trim(),tone:document.getElementById("tone").value.trim(),pov:document.getElementById("pov").value,length:parseInt(document.getElementById("length").value,10),target:parseInt(document.getElementById("target").value,10)||0,style:document.getElementById("style").value,litrpg:document.getElementById("litrpg").checked,powerSystem:document.getElementById("powerSystem").value};}
-async function buildBible(){if(busy)return;readSetup();if(!proj.setup.idea){setStatus("setupStatus",`<div class="banner">Type an idea first.</div>`);return;}busy=true;setStatus("setupStatus",loadingHtml("architecting your story..."));document.getElementById("buildBible").disabled=true;try{const sys="You are a master novelist and story architect. Design original vivid internally consistent worlds. Output clean markdown. No preamble.";const p=`Design the foundation for a long-running ${proj.setup.genre||"novel"} (tone: ${proj.setup.tone||"engaging"}). From this idea:\n\n"${proj.setup.idea}"\n\n${powerSystemGuide()}${genreGuide()}\nProvide in markdown:\n# Story Title\nLogline — one line.\n## World — setting, rules, atmosphere.\n## Main Characters — 3-5 each with name, role, want, flaw.\n## The Long Arc — macro journey across hundreds of chapters.\n## Tone and Style — prose voice, what to never do stylistically.`;const text=await callStory(sys,p,1500);proj.bible=text;const m=text.match(/^#\s+(.+)$/m);proj.title=m?m[1].trim():"Untitled";document.getElementById("bible").value=text;["biblePanel","studioPanel","guidePanel"].forEach(id=>document.getElementById(id).style.display="block");setStatus("setupStatus",`<div class="banner ok">Bible ready. Fill Canon, Characters, and Story arcs. Then use the Chapter Guide below.</div>`);renderStudio();renderGuide();save();}catch(e){setStatus("setupStatus",`<div class="banner">${esc(e.message)}</div>`);}busy=false;document.getElementById("buildBible").disabled=false;}
+function readSetup(){proj.setup={idea:document.getElementById("idea").value.trim(),genre:document.getElementById("genre").value.trim(),tone:document.getElementById("tone").value.trim(),pov:document.getElementById("pov").value,length:parseInt(document.getElementById("length").value,10),target:parseInt(document.getElementById("target").value,10)||0,style:document.getElementById("style").value,litrpg:document.getElementById("litrpg").checked,powerSystem:document.getElementById("powerSystem").value,structure:document.getElementById("structure").value};}
+async function buildBible(){if(busy)return;readSetup();if(!proj.setup.idea){setStatus("setupStatus",`<div class="banner">Type an idea first.</div>`);return;}busy=true;setStatus("setupStatus",loadingHtml("architecting your story..."));document.getElementById("buildBible").disabled=true;try{const sys="You are a master novelist and story architect. Design original vivid internally consistent worlds. Output clean markdown. No preamble.";const p=`Design the foundation for a long-running ${proj.setup.genre||"novel"} (tone: ${proj.setup.tone||"engaging"}). From this idea:\n\n"${proj.setup.idea}"\n\n${powerSystemGuide()}${genreGuide()}${structureFullGuide()}\nProvide in markdown:\n# Story Title\nLogline — one line.\n## World — setting, rules, atmosphere.\n## Main Characters — 3-5 each with name, role, want, flaw.\n## The Long Arc — macro journey across hundreds of chapters.\n## Tone and Style — prose voice, what to never do stylistically.`;const text=await callStory(sys,p,1500);proj.bible=text;const m=text.match(/^#\s+(.+)$/m);proj.title=m?m[1].trim():"Untitled";document.getElementById("bible").value=text;["biblePanel","studioPanel","guidePanel"].forEach(id=>document.getElementById(id).style.display="block");setStatus("setupStatus",`<div class="banner ok">Bible ready. Fill Canon, Characters, and Story arcs. Then use the Chapter Guide below.</div>`);renderStudio();renderGuide();save();}catch(e){setStatus("setupStatus",`<div class="banner">${esc(e.message)}</div>`);}busy=false;document.getElementById("buildBible").disabled=false;}
 function parseOutline(t){return(t||"").split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const parts=l.split("|").map(s=>s.trim());const rng=(parts[0]||"").match(/(\d+)\s*[-]\s*(\d+)/);if(!rng)return null;return{start:+rng[1],end:+rng[2],title:parts[1]||"",focus:parts[2]||""};}).filter(Boolean);}
 function currentArc(n){const arcs=parseOutline(document.getElementById("outline").value);if(!arcs.length)return null;return arcs.find(x=>n>=x.start&&n<=x.end)||(n>arcs[arcs.length-1].end?arcs[arcs.length-1]:null);}
 function checkArcTransition(){const n=proj.chapters.length;if(!n)return;const arcs=parseOutline(document.getElementById("outline").value);if(!arcs.length)return;const done=arcs.find(x=>n===x.end);const el=document.getElementById("arcAlert");if(done){el.innerHTML=`<div class="arc-alert"><strong>Arc complete: "${done.title}"</strong>Before writing Chapter ${n+1}: 1) Update Current story goal 2) Confirm next arc in Story arcs 3) Add any new permanent rules to Canon notes</div>`;}else el.innerHTML="";}
@@ -1175,6 +1237,156 @@ function renderGenreChips(){
     return `<span class="chip${active?" active":""}" data-genre="${esc(k)}">${esc(k)}</span>`;
   }).join("");
 }
+/* ============================================================
+   STORY STRUCTURES — public-domain narrative frameworks used as an
+   ANCHOR for flow. Each gives the AI the right beat for the story's
+   current position (early/middle/late). Adapted to the user's premise,
+   never a copy of any specific work.
+   ============================================================ */
+const STRUCTURES = {
+  three_act:{ hint:"Setup → rising confrontation → resolution.",
+    phases:[[0,.25,"ACT 1 (Setup): establish the protagonist's normal world, want, and the inciting incident that forces them in. End the act on the point of no return."],
+            [.25,.85,"ACT 2 (Confrontation): escalating obstacles and reversals; the protagonist is tested, allies and enemies sharpen, the midpoint shifts everything. Raise stakes steadily; avoid spinning in place."],
+            [.85,1,"ACT 3 (Resolution): the climax the whole story built toward, then fallout and a changed status quo."]] },
+  hero:{ hint:"Call → trials → ordeal → transformation → return.",
+    phases:[[0,.2,"DEPARTURE: ordinary world, the call to adventure, hesitation, then crossing the threshold into the unknown."],
+            [.2,.75,"INITIATION: tests, allies, enemies; approach the deepest fear; the central ordeal where the hero nearly breaks and is transformed."],
+            [.75,1,"RETURN: seize the reward, the road back, a final test, and return changed, bringing something that matters."]] },
+  save_cat:{ hint:"15-beat commercial structure.",
+    phases:[[0,.1,"OPENING/SETUP: show the hero's flawed world and what they lack; plant the theme."],
+            [.1,.25,"CATALYST & DEBATE: an event upends normal life; the hero resists, then commits (break into act two)."],
+            [.25,.5,"FUN & GAMES → MIDPOINT: deliver the premise's promise; at the midpoint a false victory or false defeat raises the stakes."],
+            [.5,.75,"BAD GUYS CLOSE IN → ALL IS LOST: pressure mounts, the team frays, then the lowest point and a 'whiff of death'."],
+            [.75,1,"DARK NIGHT → FINALE: the hero digs out using the theme, storms the climax, and proves they've changed."]] },
+  seven_point:{ hint:"Hook → plot turns → pinches → midpoint → resolution.",
+    phases:[[0,.15,"HOOK: open opposite to where the hero will end; establish the starting state."],
+            [.15,.35,"PLOT TURN 1: the call/inciting change that moves them onto the path; first PINCH applies pressure (a glimpse of the antagonist's power)."],
+            [.35,.6,"MIDPOINT: the hero shifts from reaction to action — they decide to fight rather than flee."],
+            [.6,.85,"PINCH 2: things collapse, a mentor/ally lost or a major setback; force the hero to their lowest."],
+            [.85,1,"PLOT TURN 2 → RESOLUTION: the hero gains the final piece needed, then the resolution mirrors and inverts the hook."]] },
+  kishotenketsu:{ hint:"Ki (intro) · Shō (develop) · Ten (twist) · Ketsu (reconcile).",
+    phases:[[0,.25,"KI (Introduction): introduce characters, world, and tone calmly, without forcing conflict."],
+            [.25,.55,"SHŌ (Development): deepen the situation and relationships; let things unfold naturally."],
+            [.55,.8,"TEN (Twist): the pivotal, often unexpected turn that recontextualizes everything before it — the heart of this structure."],
+            [.8,1,"KETSU (Reconciliation): bring the twist and the earlier development together into a resolution; harmony or meaning, not necessarily 'victory'."]] },
+  cultivation_climb:{ hint:"Humble start → breakthroughs → rivals → ascension.",
+    phases:[[0,.2,"FOUNDATION: a humble or wronged beginning; the protagonist gains their first edge (technique, inheritance, resolve) and sets a long goal."],
+            [.2,.7,"CLIMB: realm-by-realm progression with bottlenecks earned through insight, rival sects/geniuses, trials and treasures; each breakthrough costs something."],
+            [.7,1,"ASCENSION: confront the powers that once towered over them; a reckoning that proves how far they've climbed, opening a higher world."]] },
+  revenge_cycle:{ hint:"Wound → resolve → ascent → reckoning → cost.",
+    phases:[[0,.15,"THE WOUND: the injustice that defines the protagonist; what was taken and by whom."],
+            [.15,.65,"THE ASCENT: disciplined growth in power and cunning; dismantling the enemy's circle from the edges inward; near-misses and hardening."],
+            [.65,.9,"THE RECKONING: confronting the architect of the wound; the long-awaited collision."],
+            [.9,1,"THE COST: what vengeance took from the protagonist; the hollow or the peace that follows."]] },
+  tournament:{ hint:"Qualify → rivals → setback → triumph → fallout.",
+    phases:[[0,.2,"QUALIFY: the stakes and rules of the trial/tournament; why the protagonist must enter and what they risk."],
+            [.2,.55,"RIVALS: escalating opponents reveal the protagonist's gaps; introduce the standout rival and a looming favorite."],
+            [.55,.8,"SETBACK: a loss, injury, or revelation that forces growth or a new technique."],
+            [.8,1,"TRIUMPH & FALLOUT: the climactic match and its consequences — alliances, enmities, and what victory or defeat changes."]] },
+  tragedy:{ hint:"Rise → fatal flaw → fall → recognition.",
+    phases:[[0,.3,"RISE: the protagonist gains power, love, or status; their strength and their flaw are the same trait."],
+            [.3,.6,"THE FLAW BITES: the flaw drives a choice that plants the seeds of ruin; warnings ignored."],
+            [.6,.9,"THE FALL: consequences cascade beyond control; allies turn or are lost."],
+            [.9,1,"RECOGNITION: the protagonist finally sees their own part in the ruin — too late. Land the meaning, not comfort."]] },
+  mystery_spiral:{ hint:"Clue → theory → reversal → deeper question.",
+    phases:[[0,.2,"THE HOOK: the central wrongness or crime; what doesn't add up and why the protagonist must know."],
+            [.2,.75,"THE SPIRAL: clue → theory → reversal, repeating; each answer reveals a deeper, more disturbing question; suspects and stakes shift."],
+            [.75,1,"THE TRUTH: the revelation reframes earlier chapters; the cost of knowing; the new normal it leaves."]] }
+};
+function structurePhase(){
+  const k=(proj.setup&&proj.setup.structure)||"none";
+  const st=STRUCTURES[k]; if(!st) return null;
+  const tgt=parseInt((proj.setup&&proj.setup.target)||0)||0;const total=tgt>0?tgt:Math.max(40,proj.chapters.length+3);
+  const pos=Math.min(0.999,(proj.chapters.length)/Math.max(1,total));
+  const ph=st.phases.find(p=>pos>=p[0]&&pos<p[1])||st.phases[st.phases.length-1];
+  return ph[2];
+}
+function structureGuide(){
+  const k=(proj.setup&&proj.setup.structure)||"none";
+  if(!STRUCTURES[k]) return "";
+  const phase=structurePhase();
+  return "\nSTORY STRUCTURE ANCHOR — this novel follows a proven shape (adapt it to THIS story's characters and premise; it is a skeleton, never a copy of any existing work). Right now the story is in this phase:\n"+phase+"\nLet this guide the chapter's role in the larger arc, but always honor the author's specific chapter notes first.\n";
+}
+function structureFullGuide(){
+  // for bible building: give the whole skeleton
+  const k=(proj.setup&&proj.setup.structure)||"none";
+  const st=STRUCTURES[k]; if(!st) return "";
+  return "\nSTRUCTURAL FRAMEWORK to shape the overall plot (adapt to this premise; never copy a specific work):\n"+st.phases.map((p,i)=>`${i+1}. ${p[2]}`).join("\n")+"\n";
+}
+function updateStructureHint(){
+  const el=document.getElementById("structureHint"); if(!el) return;
+  const k=document.getElementById("structure").value; const st=STRUCTURES[k];
+  el.textContent=st?st.hint:"";
+}
+// Visible, position-aware structure progress bar — makes the anchor something the writer can SEE and steer by.
+function structureInfo(){
+  const k=(proj.setup&&proj.setup.structure)||"none";
+  const st=STRUCTURES[k]; if(!st) return null;
+  const tgt=parseInt((proj.setup&&proj.setup.target)||0)||0;
+  const total=tgt>0?tgt:Math.max(40,proj.chapters.length+3);
+  const pos=Math.min(0.999,(proj.chapters.length)/Math.max(1,total));
+  let idx=st.phases.findIndex(p=>pos>=p[0]&&pos<p[1]); if(idx<0) idx=st.phases.length-1;
+  return {st,total,pos,idx,tgt};
+}
+function renderStructureBar(){
+  const el=document.getElementById("structureBar"); if(!el) return;
+  const info=structureInfo();
+  if(!info){ el.style.display="none"; el.innerHTML=""; return; }
+  el.style.display="";
+  const {st,pos,idx,tgt}=info;
+  const nameOf=t=>((t||"").split(":")[0]||"").trim();
+  const segs=st.phases.map((p,i)=>`<div class="sb-seg${i===idx?" active":i<idx?" done":""}" style="flex:0 0 ${((p[1]-p[0])*100).toFixed(2)}%" title="${esc(p[2])}"><span>${esc(nameOf(p[2]))}</span></div>`).join("");
+  const pct=Math.round(pos*100);
+  const where=tgt?`ch ${proj.chapters.length} of ${tgt}`:`ch ${proj.chapters.length} — set a Target chapters count for exact pacing`;
+  el.innerHTML=`<div class="sb-cap">Structure — you're in <b>${esc(nameOf(st.phases[idx][2]))}</b> · ~${pct}% through (${esc(where)})</div><div class="sb-track">${segs}<div class="sb-marker" style="left:${(pos*100).toFixed(1)}%"></div></div>`;
+}
+/* ============================================================
+   STORY ARCHITECT — the "spine". Before each auto chapter the AI
+   PLANS the chapter (purpose + beats + hook), driven by the arc,
+   structure phase, next turning point, open threads, live story
+   state, and character arc stages. Turns "and then this happened"
+   into intentional storytelling.
+   ============================================================ */
+function parseTentpoles(){return (proj.tentpoles||"").split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^(?:ch(?:apter)?\s*)?(\d+)\s*[|:\-–]\s*(.+)$/i);return m?{ch:+m[1],event:m[2].trim()}:null;}).filter(Boolean).sort((a,b)=>a.ch-b.ch);}
+function nextTentpole(n){return parseTentpoles().find(x=>x.ch>=n)||null;}
+function tentpoleBlock(n){const t=parseTentpoles();if(!t.length)return "";const cur=t.filter(x=>x.ch<=n).slice(-1)[0];const nx=nextTentpole(n);let s="\nMAJOR TURNING POINTS — steer the story toward these; never stall or skip them:\n";if(cur&&cur.ch===n)s+=`- THIS CHAPTER (${n}) must deliver: ${cur.event}\n`;if(nx&&!(cur&&cur.ch===n))s+=`- NEXT MAJOR TURN at ch ${nx.ch}: ${nx.event} — build toward it now, don't mark time.\n`;return s;}
+function storyStateBlock(){return proj.storyState?`\nCURRENT STORY STATE — carry these details forward exactly; do not contradict them, update them only as this chapter changes them:\n${proj.storyState}\n`:"";}
+function arcStagesBlock(){return proj.arcStages?`\nCHARACTER ARC STAGES — advance these over time; a character must NOT believe the same lie or stay unchanged forever. Move at least one forward when natural:\n${proj.arcStages}\n`:"";}
+function openThreadsForPlan(){const a=(proj.promiseLog||"").split("\n").filter(l=>/\[OPEN\]/i.test(l));const b=(proj.openMysteriesLog||"").split("\n").map(l=>l.trim()).filter(Boolean);const all=a.concat(b).slice(-12);return all.length?all.join("\n"):"(none tracked yet — you may plant one)";}
+async function planChapter(n,arcLine,tail){
+  try{
+    setStatus("studioStatus",loadingHtml(`planning chapter ${n}…`));
+    const sys="You are a story architect planning ONE chapter of a serialized novel. Output ONLY the plan in the exact format requested — terse, concrete, cause→effect. No prose, no preamble, no commentary.";
+    const p=`Plan chapter ${n}. Decide its single job in the larger story, then the concrete beats to accomplish it. Advance the plot AND at least one character — absolutely no filler or "nothing happened" chapter.\n\n`+
+      `STORY BIBLE:\n${(proj.bible||"").slice(0,1600)}\n\n`+
+      `${structureGuide()}${tentpoleBlock(n)}${stakesBlock()}`+
+      `${arcLine}${proj.goal?`STORY GOAL: ${proj.goal}\n`:""}`+
+      `CURRENT STORY STATE:\n${proj.storyState||"(start of book)"}\n\n`+
+      `CHARACTER ARC STAGES:\n${proj.arcStages||"(not yet tracked)"}\n\n`+
+      `OPEN THREADS to progress or pay off:\n${openThreadsForPlan()}\n\n`+
+      `STORY SO FAR (recent recaps):\n${proj.beats.slice(-6).join("\n")||"(first chapter)"}\n\n`+
+      `${tail?`PREVIOUS CHAPTER ENDED:\n${tail.slice(-400)}\n\n`:""}`+
+      `Output EXACTLY this shape and nothing else:\nONLY <names of the characters who appear> appear. NO others.\nPURPOSE: one line — what this chapter changes in the larger arc.\nBeat 1: concrete action/turn\nBeat 2: its consequence\nBeat 3: escalation or reversal\n(3–5 beats total, in order)\nEnd on: a hook or unresolved turn that pulls into chapter ${n+1}.`;
+    const out=(await callStory(sys,p,600)).trim();
+    return out.length>20?out:"";
+  }catch(e){return "";}
+}
+async function genTentpoles(){
+  if(busy)return;proj.bible=document.getElementById("bible").value;
+  if(!proj.bible.trim()){setStatus("tentStatus",`<div class="banner">Build the story bible first.</div>`);return;}
+  busy=true;const btn=document.getElementById("planTentpoles");if(btn)btn.disabled=true;
+  setStatus("tentStatus",loadingHtml("pinning the turning points…"));
+  try{
+    const target=(proj.setup&&proj.setup.target)||100;
+    const sys="You are a story architect. Output ONLY the requested lines, nothing else.";
+    const p=`For this novel of about ${target} chapters, name the 6–9 MAJOR turning points that must happen and roughly which chapter each lands on, spread across the WHOLE book: an inciting incident early; a midpoint reversal near the middle; an "all is lost" low point in the last third; the climax near the end; a resolution last. Make each event concrete and specific to THIS story.\n\n${structureFullGuide()}\nSTORY BIBLE:\n${proj.bible.slice(0,2500)}\n\nOutput ONLY lines in EXACTLY this format, ascending chapter order:\nchapter | the concrete event`;
+    const out=await callStory(sys,p,700);
+    const cleaned=out.split("\n").filter(l=>/^\s*(?:ch(?:apter)?\s*)?\d+\s*[|:\-–]/i.test(l)).join("\n")||out;
+    document.getElementById("tentpoles").value=cleaned;proj.tentpoles=cleaned;save();renderStructureBar();
+    setStatus("tentStatus",`<div class="banner ok">Turning points pinned. Auto-write will now build toward them.</div>`);
+  }catch(e){setStatus("tentStatus",`<div class="banner">${esc(e.message)}</div>`);}
+  busy=false;if(btn)btn.disabled=false;
+}
 function powerSystemGuide(){
   const k=(proj.setup&&proj.setup.powerSystem)||"none";
   const ps=POWER_SYSTEMS[k]; if(!ps) return "";
@@ -1191,6 +1403,45 @@ function emotionDirective(){
   }
   // AUTO — instruct the model to derive the fitting emotion from arc + recent events
   return `\nEMOTIONAL DIRECTION (decide for yourself): Before writing, judge what this chapter should make the reader FEEL, based on the current arc, the most recent events, the characters' situation, and where the plot is heading. Choose the emotion this specific moment earns (e.g. dread, grief, triumph, tension, tenderness, betrayal, awe, melancholy, hope) and write the chapter to deliver it. Vary the emotional register across chapters — don't repeat the same note every time. ${craft}\n`;
+}
+// CHARACTER CORE — want/need/flaw/lie so arcs actually develop. Inject cores for characters likely in this chapter.
+function coreCharsBlock(upcoming){
+  const el=document.getElementById("coreChars");
+  const raw=(el?el.value:proj.coreChars||"").trim();
+  if(!raw) return "";
+  const lines=raw.split("\n").map(l=>l.trim()).filter(Boolean);
+  const hay=((upcoming||"")+" "+(proj.cast||"")).toLowerCase();
+  let pick=lines.filter(l=>{const parts=l.split("|")[0].trim().toLowerCase().split(/\s+/).filter(w=>w.length>2);return parts.some(w=>new RegExp("\\b"+w.replace(/[^a-z0-9]/g,"")+"\\b").test(hay));});
+  if(!pick.length) pick=lines.slice(0,4);
+  return "\nCHARACTER CORES — let these drive behavior and growth. A character should act from their WANT, be quietly pulled by their NEED, stumble on their FLAW, and slowly confront their LIE. Don't state these outright; dramatize them:\n"+pick.join("\n")+"\n";
+}
+// STAKES & ESCALATION — keep tension rising; fight the mid-novel plateau.
+function stakesBlock(){
+  const el=document.getElementById("stakes");
+  const st=(el?el.value:proj.stakes||"").trim();
+  const esc_on=document.getElementById("escalate")?document.getElementById("escalate").checked:true;
+  let out="";
+  if(st) out+="\nCURRENT STAKES (what's at risk): "+st+"\n";
+  if(esc_on){
+    const n=(proj.chapters||[]).length;
+    out+="ESCALATION: This is a serialized novel — tension must not plateau. This chapter should raise or complicate the stakes, tighten the pressure on the protagonist, or pay something off that opens something worse. Avoid a 'nothing really happened' chapter: something must shift by the end that the reader couldn't un-know.\n";
+  }
+  return out;
+}
+async function genCores(){
+  if(busy) return;
+  if(!proj.bible){ setStatus("coreStatus",`<div class="banner">Build the story bible first.</div>`); return; }
+  busy=true; document.getElementById("genCores").disabled=true;
+  setStatus("coreStatus",loadingHtml("drafting character cores…"));
+  try{
+    const sys="You design character psychology for fiction. Output ONLY lines in the exact format requested, nothing else.";
+    const p=`For each MAJOR character, give the engine of their arc. Output ONE line per character, EXACTLY:\nName | WANT: external goal | NEED: what they truly lack | FLAW: their defining weakness | LIE: the false belief they live by\n\nBIBLE:\n${proj.bible.slice(0,2200)}\n\nCAST:\n${proj.cast||"(infer from the bible)"}`;
+    const out=await callStory(sys,p,700);
+    const cleaned=out.split("\n").filter(l=>l.includes("|")&&/want/i.test(l)).join("\n")||out.trim();
+    document.getElementById("coreChars").value=cleaned; proj.coreChars=cleaned; save();
+    setStatus("coreStatus",`<div class="banner ok">Character cores drafted — edit any line to sharpen the want/need/flaw/lie.</div>`);
+  }catch(e){ setStatus("coreStatus",`<div class="banner">${esc(e.message)}</div>`); }
+  busy=false; document.getElementById("genCores").disabled=false;
 }
 // Style reference: echo a prose voice the author has rights to (own work / public domain).
 function styleRefBlock(){
@@ -1561,6 +1812,57 @@ async function titleForChapter(body,n,inlineTitle){
   return title;
 }
 let _polishPending=null; // {idx, text}
+// Replace em/en dashes (the #1 AI tell) with human punctuation. Keeps hyphens in compound words.
+function stripDashes(t){
+  if(!t) return t;
+  return t
+    .replace(/\s*[—–]\s*/g, ", ")   // em/en dash with spaces -> comma
+    .replace(/\s+--\s+/g, ", ")       // double hyphen as dash -> comma
+    .replace(/,\s*,/g, ",")           // collapse accidental double commas
+    .replace(/,\s*\./g, ".")          // comma before period cleanup
+    .replace(/\s{2,}/g, " ");
+}
+async function humanizeChapter(idx){
+  if(busy)return; const c=proj.chapters[idx]; if(!c)return;
+  busy=true; setStatus("studioStatus",loadingHtml(`humanizing Chapter ${c.n} — removing AI tells…`));
+  try{
+    const styleSample=(proj.styleRef||"").trim();
+    const sys="You are an expert fiction line-editor who removes the signs of AI-generated writing (based on Wikipedia's 'Signs of AI writing' guide) while preserving the story exactly. You keep every plot event, line of dialogue, and character action identical. You change only HOW it is written.";
+    const p=`Rewrite the chapter below to read as natural, human-written fiction. Remove AI tells WITHOUT changing the story, events, dialogue meaning, or length significantly.
+
+REMOVE / FIX these AI patterns:
+- Significance inflation: "a testament to", "stood as", "marked a pivotal moment", "underscored", "reflecting broader".
+- Promotional/purple words: "vibrant", "breathtaking", "nestled", "rich tapestry", "stunning", "boasts".
+- Superficial -ing tails: "...,highlighting...", "...,symbolizing...", "...,reflecting...", "...,ensuring...".
+- AI vocabulary: "delve", "intricate", "interplay", "crucial", "enduring", "showcase", "tapestry", "pivotal", "landscape" (abstract).
+- Copula avoidance: change "serves as/stands as/boasts" back to simple "is/are/has".
+- Negative parallelism: "not just X, but Y", "it's not merely...".
+- Rule of three: forced triples of adjectives/clauses — break them up or cut.
+- Synonym cycling: stop renaming the same character/thing every sentence.
+- False ranges: "from X to Y" where X and Y aren't a real scale.
+- Cliché AI tells: "a shiver ran down", "the air was thick with", "little did they know", "couldn't help but", "heart pounded", "barely above a whisper", "time seemed to slow".
+- Em dashes and en dashes: remove ALL of them. Replace with a period, comma, colon, or parentheses.
+- Over-tidy rhythm: vary sentence length; let some be short. Cut filler and over-explanation. Trust the reader.
+
+KEEP: the plot, every event and reveal, all dialogue meaning, the POV, the genre tone, and roughly the same length. Do NOT add new events or summarize.
+${styleSample?"MATCH THIS VOICE (mirror its rhythm and word-level texture, not its content):\n\"\"\"\n"+styleSample.slice(0,800)+"\n\"\"\"\n":""}
+Output ONLY the rewritten chapter prose — no title line, no commentary.
+
+CHAPTER ${c.n}:
+${c.text}`;
+    let out=(await callStory(sys,p,Math.min(8000,Math.round(c.text.length/3)+800))).trim().replace(/^##[^\n]*\n/,"").trim();out=stripDashes(out);
+    if(!out||out.length<Math.round(c.text.length*0.4)){ setStatus("studioStatus",`<div class="banner">Humanize came back too short — kept your original. Try again or switch engine.</div>`); busy=false; return; }
+    _polishPending={idx, text:out};
+    document.getElementById("polishCh").textContent=`(Chapter ${c.n} — humanized)`;
+    document.getElementById("polishPreview").innerHTML=mdToHtml(out);
+    document.getElementById("polishPanel").style.display="block";
+    document.getElementById("polishPanel").scrollIntoView({behavior:"smooth",block:"center"});
+    setStatus("studioStatus","");
+  }catch(e){
+    setStatus("studioStatus",`<div class="banner">Humanize failed: ${esc(e.message)}${isRateLimit(e.message)?" (rate limit — wait or switch engine)":""}</div>`);
+  }
+  busy=false;
+}
 async function polishChapter(idx){
   if(busy)return; const c=proj.chapters[idx]; if(!c)return;
   busy=true; setStatus("studioStatus",loadingHtml(`polishing Chapter ${c.n} — line-editing the prose…`));
@@ -1629,7 +1931,7 @@ async function retitleChapter(idx){
   }
   busy=false;
 }
-async function writeChapter(){const n=proj.chapters.length+1;proj.bible=document.getElementById("bible").value;proj.canon=document.getElementById("canon").value.trim();proj.goal=document.getElementById("goal").value.trim();proj.cast=document.getElementById("cast").value.trim();proj.outline=document.getElementById("outline").value;const dir=document.getElementById("direction").value.trim();const arc=currentArc(n);const arcLine=arc?`CURRENT ARC (Ch${arc.start}-${arc.end}) - "${arc.title}": ${arc.focus}\n`:"";const targetWords=Math.round((proj.setup.length||1800)/1.45);const words=targetWords;const last=proj.chapters[proj.chapters.length-1];const tail=last?last.text.slice(-700):"";const litrpg=proj.setup.litrpg?" Include occasional LitRPG system notifications as markdown blockquotes.":"";const vaultCtx=buildVaultCtx();const retrievedCtx=retrieveOldContext([dir,proj.goal,arcLine,tail].join(" "));const voiceCtx=voiceCardsFor(dir);const glossaryCtx=glossaryBlock();const phraseCtx=phraseAvoidBlock();const usedTitles=proj.chapters.slice(-15).map(c=>c.title).filter(Boolean);const sc=smartCast(dir);if(dir){if(!proj.notesHistory)proj.notesHistory=[];proj.notesHistory.push({chapter:n,notes:dir});if(proj.notesHistory.length>60)proj.notesHistory=proj.notesHistory.slice(-60);}
+async function writeChapter(){const n=proj.chapters.length+1;proj.bible=document.getElementById("bible").value;proj.canon=document.getElementById("canon").value.trim();proj.goal=document.getElementById("goal").value.trim();proj.cast=document.getElementById("cast").value.trim();proj.outline=document.getElementById("outline").value;let dir=document.getElementById("direction").value.trim();const arc=currentArc(n);const arcLine=arc?`CURRENT ARC (Ch${arc.start}-${arc.end}) - "${arc.title}": ${arc.focus}\n`:"";const targetWords=Math.round((proj.setup.length||1800)/1.45);const words=targetWords;const last=proj.chapters[proj.chapters.length-1];const tail=last?last.text.slice(-700):"";const litrpg=proj.setup.litrpg?" Include occasional LitRPG system notifications as markdown blockquotes.":"";const vaultCtx=buildVaultCtx();const retrievedCtx=retrieveOldContext([dir,proj.goal,arcLine,tail].join(" "));const voiceCtx=voiceCardsFor(dir);const glossaryCtx=glossaryBlock();const phraseCtx=phraseAvoidBlock();const usedTitles=proj.chapters.slice(-15).map(c=>c.title).filter(Boolean);if((proj.architect!==false)&&!dir&&sceneInfo()==="normal"){const _plan=await planChapter(n,arcLine,tail);if(_plan){dir=_plan;setStatus("studioStatus",loadingHtml(`writing chapter ${n}…`));}}const sc=smartCast(dir);if(dir){if(!proj.notesHistory)proj.notesHistory=[];proj.notesHistory.push({chapter:n,notes:dir});if(proj.notesHistory.length>60)proj.notesHistory=proj.notesHistory.slice(-60);}
 const sys=`You are a master ${proj.setup.genre||""} novelist writing a long-running serialized novel. ${styleGuide()} POV: ${proj.setup.pov||"third person limited"}.
 ABSOLUTE RULES:
 1. Author chapter notes take ABSOLUTE PRIORITY. Follow every beat in order.
@@ -1639,15 +1941,15 @@ ABSOLUTE RULES:
 5. Every world rule in Canon notes must be respected.
 6. Do not recap previous chapters — continue forward.
 7. End on a hook or unresolved wrongness.${litrpg}`;
-const p=`STORY BIBLE:\n${proj.bible}\n\nCANON - NEVER CONTRADICT:\n${proj.canon||"(none set)"}\n${powerSystemGuide()}${genreGuide()}${emotionDirective()}${sceneDirective()}${pacingDirective()}${styleRefBlock()}${humanizeBlock()}\n${vaultCtx}${retrievedCtx}STORY SO FAR (recent recaps):\n${proj.beats.length?recentBeats():"(first chapter)"}\n\n${tail?`HOW THE PREVIOUS CHAPTER ENDED (its last lines):\n${tail}\n${transitionDirective()}\n`:""}\n${arcLine}${proj.goal?`STORY GOAL: ${proj.goal}\n`:""}\nCHARACTER ROSTER - NEVER show dead or unaccounted as alive:\n${sc||"(none set)"}\n${glossaryCtx}${voiceCtx}${phraseCtx}\nAUTHOR CHAPTER NOTES - FOLLOW EXACTLY:\n${dir||"(no notes - follow arc and canon)"}\n\nDO NOT: add characters not in notes; add beats not in notes; contradict canon; show dead characters as alive.\n\nWrite CHAPTER ${n}. LENGTH: aim for about ${words} words, but reach it ONLY through substance — meaningful action, dialogue, conflict, character interiority, and plot progress. NEVER pad to hit a word count: no filler, no repeated information, no lengthy meaningless description, no irrelevant tangents. If the scene's purpose is complete, end the chapter rather than inflating it. Every paragraph must earn its place and move the story or character forward.\nStart with: ## Chapter ${n}: working title\nThen chapter prose.\nThen:\n<<RECAP>> one-sentence recap <<END>>\n<<CAST>>\n- Name | role | current status and key facts\n(max 12 only characters who appeared)\n<<END>>\n<<FACTS>>\n- any NEW permanent world rules or unchangeable facts THIS chapter established that future chapters must never contradict (a death, a vow, a revealed rule of the system, a permanent change). One per line. If none, leave empty.\n<<END>>\n<<THREADS>>\nPLANT: any NEW unresolved thread/mystery/promise this chapter introduces (one per line, short)\nPAYOFF: any earlier planted thread this chapter RESOLVES (one per line, short)\n<<END>>`;
-const raw=await callStory(sys,p,Math.min(8000,Math.round(targetWords*1.9)+900));let recap="";const rm=raw.match(/<<RECAP>>([\s\S]*?)<<END>>/);if(rm)recap=rm[1].trim();const cm=raw.match(/<<CAST>>([\s\S]*?)<<END>>/);if(cm){const existing=parseCast(proj.cast);const aiRows=parseCast(cm[1].trim());const merged=[...existing];aiRows.forEach(ar=>{const idx=merged.findIndex(e=>e.name.toLowerCase()===ar.name.toLowerCase());if(idx>=0)merged[idx]={...merged[idx],...ar};else merged.push(ar);});proj.cast=merged.map(c=>`${c.name} | ${c.role} | ${c.status}${c.facts?" | "+c.facts:""}`).join("\n");document.getElementById("cast").value=proj.cast;}const _nonLinear=sceneIsNonLinear();const fm=raw.match(/<<FACTS>>([\s\S]*?)<<END>>/);if(fm&&!_nonLinear)mergeCanonFacts(fm[1].trim());const thm=raw.match(/<<THREADS>>([\s\S]*?)<<END>>/);if(thm&&!_nonLinear)mergeThreads(thm[1].trim(),n);let body=raw.replace(/<<RECAP>>[\s\S]*?<<END>>/g,"").replace(/<<CAST>>[\s\S]*?<<END>>/g,"").replace(/<<FACTS>>[\s\S]*?<<END>>/g,"").replace(/<<THREADS>>[\s\S]*?<<END>>/g,"").trim();const tm=body.match(/^##\s*Chapter\s*\d+\s*:?\s*(.+)$/im);let inlineTitle=tm?tm[1].trim():"";body=body.replace(/^##\s*Chapter[^\n]*\n/i,"").trim();let title=await titleForChapter(body,n,inlineTitle);if(!recap)recap=body.replace(/[#*]/g," ").slice(0,180);const _st=sceneInfo();if(_st==="flashback")recap="[FLASHBACK] "+recap;else if(_st==="dream")recap="[DREAM] "+recap;else if(_st==="interlude")recap="[INTERLUDE] "+recap;proj.chapters.push({n,title,text:body,scene:_st,pace:proj._suggestedPace||""});proj.beats.push(recap);try{updatePhraseGuard(body);}catch(e){}}
+const p=`STORY BIBLE:\n${proj.bible}\n\nCANON - NEVER CONTRADICT:\n${proj.canon||"(none set)"}\n${powerSystemGuide()}${genreGuide()}${structureGuide()}${coreCharsBlock(dir)}${stakesBlock()}${emotionDirective()}${sceneDirective()}${pacingDirective()}${styleRefBlock()}${humanizeBlock()}\n${vaultCtx}${retrievedCtx}STORY SO FAR (recent recaps):\n${proj.beats.length?recentBeats():"(first chapter)"}\n\n${tail?`HOW THE PREVIOUS CHAPTER ENDED (its last lines):\n${tail}\n${transitionDirective()}\n`:""}\n${arcLine}${tentpoleBlock(n)}${storyStateBlock()}${arcStagesBlock()}${proj.goal?`STORY GOAL: ${proj.goal}\n`:""}\nCHARACTER ROSTER - NEVER show dead or unaccounted as alive:\n${sc||"(none set)"}\n${glossaryCtx}${voiceCtx}${phraseCtx}\nAUTHOR CHAPTER NOTES - FOLLOW EXACTLY:\n${dir||"(no notes - follow arc and canon)"}\n\nDO NOT: add characters not in notes; add beats not in notes; contradict canon; show dead characters as alive.\n\nWrite CHAPTER ${n}. LENGTH: aim for about ${words} words, but reach it ONLY through substance — meaningful action, dialogue, conflict, character interiority, and plot progress. NEVER pad to hit a word count: no filler, no repeated information, no lengthy meaningless description, no irrelevant tangents. If the scene's purpose is complete, end the chapter rather than inflating it. Every paragraph must earn its place and move the story or character forward.\nStart with: ## Chapter ${n}: working title\nThen chapter prose.\nThen:\n<<RECAP>> one-sentence recap <<END>>\n<<CAST>>\n- Name | role | current status and key facts\n(max 12 only characters who appeared)\n<<END>>\n<<FACTS>>\n- any NEW permanent world rules or unchangeable facts THIS chapter established that future chapters must never contradict (a death, a vow, a revealed rule of the system, a permanent change). One per line. If none, leave empty.\n<<END>>\n<<THREADS>>\nPLANT: any NEW unresolved thread/mystery/promise this chapter introduces (one per line, short)\nPAYOFF: any earlier planted thread this chapter RESOLVES (one per line, short)\n<<END>>\n<<STATE>>\ncurrent location; in-world time/date; characters present at the end; any active injuries, conditions, or possessions that matter; the immediate goal going into the next chapter (a few compact lines)\n<<END>>\n<<ARC>>\nfor each MAJOR character who appeared: Name — their current inner arc stage and how their want/need/flaw/lie shifted this chapter (one per line; omit minor characters)\n<<END>>`;
+const raw=await callStory(sys,p,Math.min(8000,Math.round(targetWords*1.9)+900));let recap="";const rm=raw.match(/<<RECAP>>([\s\S]*?)<<END>>/);if(rm)recap=rm[1].trim();const cm=raw.match(/<<CAST>>([\s\S]*?)<<END>>/);if(cm){const existing=parseCast(proj.cast);const aiRows=parseCast(cm[1].trim());const merged=[...existing];aiRows.forEach(ar=>{const idx=merged.findIndex(e=>e.name.toLowerCase()===ar.name.toLowerCase());if(idx>=0)merged[idx]={...merged[idx],...ar};else merged.push(ar);});proj.cast=merged.map(c=>`${c.name} | ${c.role} | ${c.status}${c.facts?" | "+c.facts:""}`).join("\n");document.getElementById("cast").value=proj.cast;}const _nonLinear=sceneIsNonLinear();const fm=raw.match(/<<FACTS>>([\s\S]*?)<<END>>/);if(fm&&!_nonLinear)mergeCanonFacts(fm[1].trim());const thm=raw.match(/<<THREADS>>([\s\S]*?)<<END>>/);if(thm&&!_nonLinear)mergeThreads(thm[1].trim(),n);const stm=raw.match(/<<STATE>>([\s\S]*?)<<END>>/);if(stm&&!_nonLinear){proj.storyState=stm[1].trim();const _sb=document.getElementById("storyStateBox");if(_sb)_sb.value=proj.storyState;}const arm=raw.match(/<<ARC>>([\s\S]*?)<<END>>/);if(arm&&!_nonLinear){proj.arcStages=arm[1].trim();const _ab=document.getElementById("arcStagesBox");if(_ab)_ab.value=proj.arcStages;}let body=raw.replace(/<<RECAP>>[\s\S]*?<<END>>/g,"").replace(/<<CAST>>[\s\S]*?<<END>>/g,"").replace(/<<FACTS>>[\s\S]*?<<END>>/g,"").replace(/<<THREADS>>[\s\S]*?<<END>>/g,"").replace(/<<STATE>>[\s\S]*?<<END>>/g,"").replace(/<<ARC>>[\s\S]*?<<END>>/g,"").trim();const tm=body.match(/^##\s*Chapter\s*\d+\s*:?\s*(.+)$/im);let inlineTitle=tm?tm[1].trim():"";body=body.replace(/^##\s*Chapter[^\n]*\n/i,"").trim();let title=await titleForChapter(body,n,inlineTitle);if(!recap)recap=body.replace(/[#*]/g," ").slice(0,180);const _st=sceneInfo();if(_st==="flashback")recap="[FLASHBACK] "+recap;else if(_st==="dream")recap="[DREAM] "+recap;else if(_st==="interlude")recap="[INTERLUDE] "+recap;proj.chapters.push({n,title,text:body,scene:_st,pace:proj._suggestedPace||""});proj.beats.push(recap);try{updatePhraseGuard(body);}catch(e){}}
 async function writeOne(){if(busy)return;busy=true;stopFlag=false;document.getElementById("scoreWrap").style.display="none";document.getElementById("contCheckWrap").style.display="none";document.getElementById("writeOne").disabled=true;document.getElementById("autoWrite").disabled=true;setStatus("studioStatus",loadingHtml(`writing chapter ${proj.chapters.length+1}...`));try{await writeChapter();document.getElementById("direction").value="";document.getElementById("sceneType").value="normal";setStatus("studioStatus",`<div class="banner ok">Chapter written. Now: 1) Read it 2) Update Tracker tab 3) Click next chapter in the Chapter Guide below to load notes.</div>`+overdueThreadsBanner());renderStudio();save();renderNotesHist();checkArcTransition();checkBackupReminder();runContinuityCheck(true);scoreConsistency();if(proj.chapters.length%10===0)compressVaultAuto();renderGuide(document.getElementById("guideSearch").value);}catch(e){setStatus("studioStatus",`<div class="banner">${esc(e.message)}${isRateLimit(e.message)?" - Rate limit. Wait and retry.":""}</div>`);}busy=false;document.getElementById("writeOne").disabled=false;document.getElementById("autoWrite").disabled=false;}
-async function autoWrite(){if(busy)return;stopFlag=false;busy=true;document.getElementById("writeOne").disabled=true;document.getElementById("autoWrite").disabled=true;document.getElementById("stop").style.display="inline-block";while(!stopFlag){if(proj.setup.target&&proj.chapters.length>=proj.setup.target)break;setStatus("studioStatus",loadingHtml(`auto-writing chapter ${proj.chapters.length+1}...`));try{await writeChapter();renderStudio();save();renderNotesHist();checkArcTransition();checkBackupReminder();if(proj.chapters.length%10===0)compressVaultAuto();}catch(e){setStatus("studioStatus",`<div class="banner">Paused at ch${proj.chapters.length+1}: ${esc(e.message)}${isRateLimit(e.message)?" - rate limit. Wait then resume.":""}</div>`);break;}await new Promise(r=>setTimeout(r,900));}document.getElementById("stop").style.display="none";busy=false;document.getElementById("writeOne").disabled=false;document.getElementById("autoWrite").disabled=false;}
+async function autoWrite(){if(busy)return;stopFlag=false;busy=true;document.getElementById("writeOne").disabled=true;document.getElementById("autoWrite").disabled=true;document.getElementById("stop").style.display="inline-block";while(!stopFlag){if(proj.setup.target&&proj.chapters.length>=proj.setup.target)break;setStatus("studioStatus",loadingHtml(`auto-writing chapter ${proj.chapters.length+1}...`));try{await writeChapter();renderStudio();save();renderNotesHist();checkArcTransition();checkBackupReminder();const _issues=runContinuityCheck(true).filter(r=>r.type==="fail");if(_issues.length)setStatus("studioStatus",`<div class="banner warn">Ch${proj.chapters.length} written — continuity flag: ${esc(_issues[0].msg)} (see Continuity check)</div>`);if(proj.chapters.length%10===0)compressVaultAuto();}catch(e){setStatus("studioStatus",`<div class="banner">Paused at ch${proj.chapters.length+1}: ${esc(e.message)}${isRateLimit(e.message)?" - rate limit. Wait then resume.":""}</div>`);break;}await new Promise(r=>setTimeout(r,900));}document.getElementById("stop").style.display="none";busy=false;document.getElementById("writeOne").disabled=false;document.getElementById("autoWrite").disabled=false;}
 function checkBackupReminder(){if(proj.chapters.length-(proj.lastBackupAt||0)>=20)document.getElementById("backupReminder").style.display="block";}
 function dismissBackupReminder(){document.getElementById("backupReminder").style.display="none";}
 function doBackupNow(){proj.lastBackupAt=proj.chapters.length;save();exportJson();dismissBackupReminder();}
 function renderNotesHist(){const hist=proj.notesHistory||[];const el=document.getElementById("notesHist");if(!el)return;if(!hist.length){el.innerHTML=`<em style="color:var(--faint);font-size:12px">Notes used will appear here after each chapter.</em>`;return;}el.innerHTML=hist.slice().reverse().map(h=>`<div class="nentry"><span>Ch${h.chapter}:</span> ${esc(h.notes.slice(0,100))}${h.notes.length>100?"...":""}</div>`).join("");}
-function renderStudio(){const total=proj.chapters.length;const wordCount=proj.chapters.reduce((a,c)=>a+wc(c.text),0);document.getElementById("statline").textContent=`"${proj.title}" - ${total} chapter${total!==1?"s":""}${proj.setup.target?" of "+proj.setup.target:""} - ~${wordCount.toLocaleString()} words`;const list=document.getElementById("chaplist");list.innerHTML=total?proj.chapters.map((c,i)=>`<div class="ci ${i===activeChapter?"active":""}" data-i="${i}"><strong>Ch ${c.n}</strong><br><small>${esc(c.title)} - ${wc(c.text)}w</small></div>`).join(""):`<div class="ci"><small>No chapters yet</small></div>`;const reader=document.getElementById("reader");const c=proj.chapters[activeChapter];if(!c){reader.innerHTML=`<p style="color:var(--faint);font-style:italic">Your chapters will appear here.</p>`;}else if(editing){reader.innerHTML=`<div class="rbar"><input id="editTitle" value="${esc(c.title).replace(/"/g,"&quot;")}" style="max-width:340px"/><span class="spacer"></span><button class="rbtn ok-btn" data-act="save">Save</button><button class="rbtn" data-act="cancel">Cancel</button></div><textarea class="editbox" id="editText">${esc(c.text)}</textarea>`;}else{const isLast=activeChapter===total-1;reader.innerHTML=`<div class="rbar"><button class="rbtn" data-act="prev" ${activeChapter<=0?"disabled":""}>Prev</button><span class="nav">Ch ${c.n} / ${total} - ${wc(c.text)}w</span><button class="rbtn" data-act="next" ${activeChapter>=total-1?"disabled":""}>Next</button><span class="spacer"></span><button class="rbtn" data-act="copy">Copy</button><button class="rbtn" data-act="edit">Edit</button><button class="rbtn" data-act="retitle">Retitle</button><button class="rbtn" data-act="polish">Polish</button>${isLast?`<button class="rbtn" data-act="rewrite">Rewrite</button>`:""}<button class="rbtn danger" data-act="delete">Delete</button></div><h2>Chapter ${c.n}: ${esc(c.title)}${c.scene&&c.scene!=="normal"?` <span class="scene-badge">${esc(c.scene)}</span>`:""}</h2>${mdToHtml(c.text)}`;}document.getElementById("coverWrap").innerHTML=proj.cover?`<img src="${esc(proj.cover)}" alt="cover" referrerpolicy="no-referrer"/>`:""  ;renderVault();}
+function renderStudio(){const total=proj.chapters.length;const wordCount=proj.chapters.reduce((a,c)=>a+wc(c.text),0);document.getElementById("statline").textContent=`"${proj.title}" - ${total} chapter${total!==1?"s":""}${proj.setup.target?" of "+proj.setup.target:""} - ~${wordCount.toLocaleString()} words`;const list=document.getElementById("chaplist");list.innerHTML=total?proj.chapters.map((c,i)=>`<div class="ci ${i===activeChapter?"active":""}" data-i="${i}"><strong>Ch ${c.n}</strong><br><small>${esc(c.title)} - ${wc(c.text)}w</small></div>`).join(""):`<div class="ci"><small>No chapters yet</small></div>`;const reader=document.getElementById("reader");const c=proj.chapters[activeChapter];if(!c){reader.innerHTML=`<p style="color:var(--faint);font-style:italic">Your chapters will appear here.</p>`;}else if(editing){reader.innerHTML=`<div class="rbar"><input id="editTitle" value="${esc(c.title).replace(/"/g,"&quot;")}" style="max-width:340px"/><span class="spacer"></span><button class="rbtn ok-btn" data-act="save">Save</button><button class="rbtn" data-act="cancel">Cancel</button></div><textarea class="editbox" id="editText">${esc(c.text)}</textarea>`;}else{const isLast=activeChapter===total-1;reader.innerHTML=`<div class="rbar"><button class="rbtn" data-act="prev" ${activeChapter<=0?"disabled":""}>Prev</button><span class="nav">Ch ${c.n} / ${total} - ${wc(c.text)}w</span><button class="rbtn" data-act="next" ${activeChapter>=total-1?"disabled":""}>Next</button><span class="spacer"></span><button class="rbtn" data-act="copy">Copy</button><button class="rbtn" data-act="edit">Edit</button><button class="rbtn" data-act="retitle">Retitle</button><button class="rbtn" data-act="polish">Polish</button><button class="rbtn" data-act="humanize">Humanize</button>${isLast?`<button class="rbtn" data-act="rewrite">Rewrite</button>`:""}<button class="rbtn danger" data-act="delete">Delete</button></div><h2>Chapter ${c.n}: ${esc(c.title)}${c.scene&&c.scene!=="normal"?` <span class="scene-badge">${esc(c.scene)}</span>`:""}</h2>${mdToHtml(c.text)}`;}document.getElementById("coverWrap").innerHTML=proj.cover?`<img src="${esc(proj.cover)}" alt="cover" referrerpolicy="no-referrer"/>`:""  ;renderVault();renderStructureBar();}
 function navChapter(d){const t=proj.chapters.length;if(!t)return;activeChapter=Math.max(0,Math.min(t-1,activeChapter+d));editing=false;if(_polishPending){_polishPending=null;const pp=document.getElementById("polishPanel");if(pp)pp.style.display="none";}renderStudio();}
 async function copyChapter(){const c=proj.chapters[activeChapter];if(!c)return;try{await navigator.clipboard.writeText(`Chapter ${c.n}: ${c.title}\n\n${c.text}`);const b=document.querySelector("[data-act=copy]");if(b){const o=b.textContent;b.textContent="Copied";setTimeout(()=>b.textContent=o,1300);}}catch{alert("Select text and copy manually.");}}
 function startEdit(){editing=true;renderStudio();}
@@ -1744,16 +2046,16 @@ async function doImportChapters(){
   busy=false; document.getElementById("doImport").disabled=false;
 }
 
-function hydrate(){const s=proj.setup||{};document.getElementById("idea").value=s.idea||"";document.getElementById("genre").value=s.genre||"";document.getElementById("tone").value=s.tone||"";if(s.pov)document.getElementById("pov").value=s.pov;if(s.length)document.getElementById("length").value=String(s.length);if(s.target)document.getElementById("target").value=s.target;if(s.style)document.getElementById("style").value=s.style;if(s.powerSystem)document.getElementById("powerSystem").value=s.powerSystem;updatePowerHint();document.getElementById("litrpg").checked=!!s.litrpg;document.getElementById("bible").value=proj.bible||"";document.getElementById("canon").value=proj.canon||"";document.getElementById("goal").value=proj.goal||"";document.getElementById("cast").value=proj.cast||"";document.getElementById("outline").value=proj.outline||"";document.getElementById("erosionLog").value=proj.erosionLog||"";document.getElementById("promiseLog").value=proj.promiseLog||"";document.getElementById("deathLog").value=proj.deathLog||"";document.getElementById("openMysteriesLog").value=proj.openMysteriesLog||"";document.getElementById("voices").value=proj.voices||"";document.getElementById("glossary").value=proj.glossary||"";document.getElementById("styleRef").value=proj.styleRef||"";document.getElementById("humanize").checked=proj.humanize!==false;if(proj.emotion)document.getElementById("emotion").value=proj.emotion;if(proj.bible){["biblePanel","studioPanel","guidePanel"].forEach(id=>document.getElementById(id).style.display="block");}activeChapter=proj.chapters.length-1;renderStudio();renderNotesHist();checkArcTransition();renderGuide();}
+function hydrate(){const s=proj.setup||{};document.getElementById("idea").value=s.idea||"";document.getElementById("genre").value=s.genre||"";document.getElementById("tone").value=s.tone||"";if(s.pov)document.getElementById("pov").value=s.pov;if(s.length)document.getElementById("length").value=String(s.length);if(s.target)document.getElementById("target").value=s.target;if(s.style)document.getElementById("style").value=s.style;if(s.powerSystem)document.getElementById("powerSystem").value=s.powerSystem;updatePowerHint();if(s.structure)document.getElementById("structure").value=s.structure;updateStructureHint();document.getElementById("litrpg").checked=!!s.litrpg;document.getElementById("bible").value=proj.bible||"";document.getElementById("canon").value=proj.canon||"";document.getElementById("goal").value=proj.goal||"";document.getElementById("cast").value=proj.cast||"";document.getElementById("outline").value=proj.outline||"";document.getElementById("erosionLog").value=proj.erosionLog||"";document.getElementById("promiseLog").value=proj.promiseLog||"";document.getElementById("deathLog").value=proj.deathLog||"";document.getElementById("openMysteriesLog").value=proj.openMysteriesLog||"";document.getElementById("voices").value=proj.voices||"";document.getElementById("glossary").value=proj.glossary||"";document.getElementById("styleRef").value=proj.styleRef||"";document.getElementById("humanize").checked=proj.humanize!==false;document.getElementById("coreChars").value=proj.coreChars||"";document.getElementById("stakes").value=proj.stakes||"";if(document.getElementById("escalate"))document.getElementById("escalate").checked=proj.escalate!==false;if(document.getElementById("tentpoles"))document.getElementById("tentpoles").value=proj.tentpoles||"";if(document.getElementById("storyStateBox"))document.getElementById("storyStateBox").value=proj.storyState||"";if(document.getElementById("arcStagesBox"))document.getElementById("arcStagesBox").value=proj.arcStages||"";if(document.getElementById("architect"))document.getElementById("architect").checked=proj.architect!==false;if(proj.emotion)document.getElementById("emotion").value=proj.emotion;if(proj.bible){["biblePanel","studioPanel","guidePanel"].forEach(id=>document.getElementById(id).style.display="block");}activeChapter=proj.chapters.length-1;renderStudio();renderNotesHist();checkArcTransition();renderGuide();}
 document.querySelectorAll(".tab-btn").forEach(btn=>{btn.addEventListener("click",()=>{const tab=btn.dataset.tab;document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));document.querySelectorAll(".tab-pane").forEach(c=>c.classList.remove("active"));btn.classList.add("active");document.getElementById(tab).classList.add("active");if(tab==="t-designs")renderDesigns();});});
-document.getElementById("buildBible").addEventListener("click",buildBible);document.getElementById("powerSystem").addEventListener("change",updatePowerHint);renderGenreChips();document.getElementById("genreChips").addEventListener("click",e=>{const c=e.target.closest("[data-genre]");if(!c)return;const g=c.dataset.genre;const cur=document.getElementById("genre").value.trim();const has=cur.toLowerCase().includes(g.toLowerCase().split(/[\/ ]+/)[0]);document.getElementById("genre").value=has?cur:(cur?cur+", "+g:g);renderGenreChips();});document.getElementById("genre").addEventListener("input",renderGenreChips);document.getElementById("bookshelfBtn").addEventListener("click",openShelf);document.getElementById("shelfClose").addEventListener("click",closeShelf);document.getElementById("shelfGrid").addEventListener("click",e=>{const nb=e.target.closest("[data-newbook]");if(nb){closeShelf();createProject();return;}const b=e.target.closest("[data-open]");if(b){const id=b.dataset.open;closeShelf();if(id!==curId)switchProject(id);}});document.getElementById("emotion").addEventListener("change",()=>{proj.emotion=document.getElementById("emotion").value;save();});
+document.getElementById("buildBible").addEventListener("click",buildBible);document.getElementById("powerSystem").addEventListener("change",updatePowerHint);document.getElementById("structure").addEventListener("change",updateStructureHint);renderGenreChips();document.getElementById("genreChips").addEventListener("click",e=>{const c=e.target.closest("[data-genre]");if(!c)return;const g=c.dataset.genre;const cur=document.getElementById("genre").value.trim();const has=cur.toLowerCase().includes(g.toLowerCase().split(/[\/ ]+/)[0]);document.getElementById("genre").value=has?cur:(cur?cur+", "+g:g);renderGenreChips();});document.getElementById("genre").addEventListener("input",renderGenreChips);document.getElementById("bookshelfBtn").addEventListener("click",openShelf);document.getElementById("shelfClose").addEventListener("click",closeShelf);document.getElementById("shelfGrid").addEventListener("click",e=>{const nb=e.target.closest("[data-newbook]");if(nb){closeShelf();createProject();return;}const b=e.target.closest("[data-open]");if(b){const id=b.dataset.open;closeShelf();if(id!==curId)switchProject(id);}});document.getElementById("emotion").addEventListener("change",()=>{proj.emotion=document.getElementById("emotion").value;save();});
 document.getElementById("writeOne").addEventListener("click",writeOne);
 document.getElementById("autoWrite").addEventListener("click",autoWrite);
 document.getElementById("stop").addEventListener("click",()=>{stopFlag=true;});
 document.getElementById("genCover").addEventListener("click",genCover);
 document.getElementById("uploadCoverBtn").addEventListener("click",()=>document.getElementById("coverFile").click());
 document.getElementById("coverFile").addEventListener("change",(e)=>{const f=e.target.files&&e.target.files[0];uploadCover(f);e.target.value="";});
-document.getElementById("planArcs").addEventListener("click",planArcs);
+document.getElementById("planArcs").addEventListener("click",planArcs);document.getElementById("planTentpoles").addEventListener("click",genTentpoles);document.getElementById("architect").addEventListener("change",()=>{proj.architect=document.getElementById("architect").checked;save();});
 document.getElementById("exportMd").addEventListener("click",exportMd);
 document.getElementById("exportJson").addEventListener("click",()=>{proj.lastBackupAt=proj.chapters.length;save();exportJson();dismissBackupReminder();});
 document.getElementById("importBtn").addEventListener("click",()=>document.getElementById("importFile").click());
@@ -1765,14 +2067,14 @@ document.getElementById("newProj").addEventListener("click",()=>{if(confirm("Sta
 document.getElementById("checkContinuity").addEventListener("click",()=>runContinuityCheck(true));
 document.getElementById("compressVault").addEventListener("click",()=>compressVault(true));
 document.getElementById("clearVault").addEventListener("click",clearVault);
-document.getElementById("deepScanBtn").addEventListener("click",deepScan);document.getElementById("auditBtn").addEventListener("click",auditBook);document.getElementById("aiCheckBtn").addEventListener("click",aiTraceCheck);document.getElementById("genVoices").addEventListener("click",genVoices);document.getElementById("genGlossary").addEventListener("click",genGlossary);document.getElementById("humanize").addEventListener("change",()=>{proj.humanize=document.getElementById("humanize").checked;save();});document.getElementById("dlCover").addEventListener("click",downloadCover);document.getElementById("designAll").addEventListener("click",designAll);document.getElementById("designGrid").addEventListener("click",e=>{const b=e.target.closest("[data-design]");if(b)designOne(b.dataset.design);});document.getElementById("applyPolish").addEventListener("click",applyPolish);document.getElementById("discardPolish").addEventListener("click",discardPolish);
+document.getElementById("deepScanBtn").addEventListener("click",deepScan);document.getElementById("auditBtn").addEventListener("click",auditBook);document.getElementById("aiCheckBtn").addEventListener("click",aiTraceCheck);document.getElementById("genVoices").addEventListener("click",genVoices);document.getElementById("genGlossary").addEventListener("click",genGlossary);document.getElementById("humanize").addEventListener("change",()=>{proj.humanize=document.getElementById("humanize").checked;save();});document.getElementById("genCores").addEventListener("click",genCores);document.getElementById("escalate").addEventListener("change",()=>{proj.escalate=document.getElementById("escalate").checked;save();});document.getElementById("dlCover").addEventListener("click",downloadCover);document.getElementById("designAll").addEventListener("click",designAll);document.getElementById("designGrid").addEventListener("click",e=>{const b=e.target.closest("[data-design]");if(b)designOne(b.dataset.design);});document.getElementById("applyPolish").addEventListener("click",applyPolish);document.getElementById("discardPolish").addEventListener("click",discardPolish);
 document.getElementById("fixList").addEventListener("click",e=>{const b=e.target.closest("[data-fix]");if(b)applyFix(+b.dataset.fix);});
 document.getElementById("backupNow").addEventListener("click",doBackupNow);
 document.getElementById("dismissBackup").addEventListener("click",dismissBackupReminder);
 document.getElementById("chaplist").addEventListener("click",e=>{const ci=e.target.closest("[data-i]");if(ci){activeChapter=+ci.dataset.i;editing=false;renderStudio();}});
-document.getElementById("reader").addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act;if(a==="prev")navChapter(-1);else if(a==="next")navChapter(1);else if(a==="copy")copyChapter();else if(a==="edit")startEdit();else if(a==="save")saveEdit();else if(a==="cancel")cancelEdit();else if(a==="rewrite")rewriteLast();else if(a==="delete")deleteChapter(activeChapter);else if(a==="retitle")retitleChapter(activeChapter);else if(a==="polish")polishChapter(activeChapter);});
+document.getElementById("reader").addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act;if(a==="prev")navChapter(-1);else if(a==="next")navChapter(1);else if(a==="copy")copyChapter();else if(a==="edit")startEdit();else if(a==="save")saveEdit();else if(a==="cancel")cancelEdit();else if(a==="rewrite")rewriteLast();else if(a==="delete")deleteChapter(activeChapter);else if(a==="retitle")retitleChapter(activeChapter);else if(a==="polish")polishChapter(activeChapter);else if(a==="humanize")humanizeChapter(activeChapter);});
 ["canon","goal","cast","outline"].forEach(id=>{document.getElementById(id).addEventListener("change",()=>{proj[id]=document.getElementById(id).value;save();});});
-["erosionLog","promiseLog","deathLog","openMysteriesLog","voices","glossary","styleRef"].forEach(id=>{document.getElementById(id).addEventListener("change",()=>{syncTracker();save();});});
+["erosionLog","promiseLog","deathLog","openMysteriesLog","voices","glossary","styleRef","coreChars","stakes","tentpoles","storyStateBox","arcStagesBox"].forEach(id=>{document.getElementById(id).addEventListener("change",()=>{syncTracker();save();});});
 document.getElementById("backendurl").addEventListener("change",()=>{proj._backend=backendBase();save();});
 document.getElementById("genTitle").addEventListener("click",genTitle);
 document.getElementById("genSynopsis").addEventListener("click",genSynopsis);
