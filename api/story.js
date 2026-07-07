@@ -11,7 +11,7 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
 // OpenRouter free model slugs — if one is ever retired, swap it here.
 // Browse current free models at https://openrouter.ai/models?max_price=0
 const DEEPSEEK_MODEL = 'deepseek/deepseek-chat-v3-0324:free';
-const QWEN_MODEL     = 'qwen/qwen-2.5-72b-instruct:free';
+const QWEN_MODEL     = 'qwen/qwen-2.5-72b-instruct:free'; // OpenRouter retired this free slug (now paid-only) — Qwen is disabled below, not auto-fallen-back-into, so buyers on "free" engines are never silently charged
 
 async function readBody(req) {
   if (req.body && typeof req.body === 'object') return req.body;
@@ -82,10 +82,12 @@ const PROVIDERS = {
   gemini:   geminiText,
   groq:     groqText,
   deepseek: (o) => openrouterText(DEEPSEEK_MODEL, o),
-  qwen:     (o) => openrouterText(QWEN_MODEL, o),
+  qwen:     (o) => openrouterText(QWEN_MODEL, o), // kept only so a user who explicitly picks Qwen gets a clear "retired" error, not a silent charge
   claude:   claudeText
 };
-const FREE_ORDER = ['gemini', 'groq', 'deepseek', 'qwen'];
+// Qwen's free slug is dead on OpenRouter — removed from the auto-fallback chain so a buyer on a "free" engine
+// never gets silently routed into it (which would now be a PAID call on your OpenRouter balance).
+const FREE_ORDER = ['gemini', 'groq', 'deepseek'];
 
 function hasKey(p) {
   if (p === 'gemini') return !!GEMINI_API_KEY;
