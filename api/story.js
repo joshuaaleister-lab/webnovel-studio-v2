@@ -113,9 +113,11 @@ module.exports = async (req, res) => {
     const opts = { prompt, systemPrompt: b.systemPrompt || b.system || '', maxTokens: b.maxTokens || 1000, history: b.history || [] };
 
     // Build the attempt chain. Claude (paid) never auto-falls back.
+    // lockEngine: the frontend can ask to skip auto-fallback entirely — fail loudly instead of
+    // silently substituting a different model, so a long book's voice doesn't drift chapter to chapter.
     let chain;
-    if (requested === 'claude') {
-      chain = ['claude'];
+    if (requested === 'claude' || b.lockEngine) {
+      chain = [requested];
     } else {
       chain = [requested, ...FREE_ORDER.filter(p => p !== requested)].filter(p => PROVIDERS[p] && hasKey(p));
       if (chain.length === 0) chain = [requested]; // surfaces a clear "key not set" error
