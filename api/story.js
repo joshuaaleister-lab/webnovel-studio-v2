@@ -30,7 +30,7 @@ async function geminiText({ prompt, systemPrompt, maxTokens, history, key }) {
   if (!GEM) throw new Error('No Gemini API key — paste your free key in the app (Get your free key link).');
   const contents = (history || []).map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: typeof m.content === 'string' ? m.content : '' }] }));
   contents.push({ role: 'user', parts: [{ text: prompt }] });
-  const body = { contents, generationConfig: { maxOutputTokens: maxTokens || 1000 } };
+  const body = { contents, generationConfig: { maxOutputTokens: maxTokens || 1000, temperature: 0.95, topP: 0.97 } };
   if (systemPrompt) body.systemInstruction = { parts: [{ text: systemPrompt }] };
   const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + GEM;
   const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
@@ -47,7 +47,7 @@ async function openaiChat(endpoint, key, model, { prompt, systemPrompt, maxToken
   for (const m of (history || [])) messages.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: typeof m.content === 'string' ? m.content : '' });
   messages.push({ role: 'user', content: prompt });
   const headers = Object.assign({ 'content-type': 'application/json', 'authorization': 'Bearer ' + key }, extraHeaders || {});
-  const r = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify({ model, messages, max_tokens: maxTokens || 1000 }) });
+  const r = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify({ model, messages, max_tokens: maxTokens || 1000, temperature: 1.0, top_p: 0.97 }) });
   if (!r.ok) throw new Error(model + ' ' + r.status + ': ' + (await r.text()));
   const data = await r.json();
   return (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
@@ -75,7 +75,7 @@ async function claudeText({ prompt, systemPrompt, maxTokens, history, key }) {
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': AK, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: maxTokens || 1000, ...(systemPrompt ? { system: systemPrompt } : {}), messages })
+    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: maxTokens || 1000, temperature: 1.0, ...(systemPrompt ? { system: systemPrompt } : {}), messages })
   });
   if (!r.ok) throw new Error('Claude ' + r.status + ': ' + (await r.text()));
   const data = await r.json();
