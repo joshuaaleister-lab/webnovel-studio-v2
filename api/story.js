@@ -10,7 +10,7 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
 
 // OpenRouter free model slugs — if one is ever retired, swap it here.
 // Browse current free models at https://openrouter.ai/models?max_price=0
-const DEEPSEEK_MODEL = 'deepseek/deepseek-chat-v3-0324:free';
+const DEEPSEEK_MODEL = 'deepseek/deepseek-chat-v3-0324:free'; // OpenRouter retired this free slug too (now paid-only) — DeepSeek is removed from auto-fallback below so it never silently 404s or bills you
 const QWEN_MODEL     = 'qwen/qwen-2.5-72b-instruct:free'; // OpenRouter retired this free slug (now paid-only) — Qwen is disabled below, not auto-fallen-back-into, so buyers on "free" engines are never silently charged
 
 async function readBody(req) {
@@ -25,13 +25,14 @@ async function readBody(req) {
 }
 
 // ---- Gemini (free) ----
-async function geminiText({ prompt, systemPrompt, maxTokens, history }) {
-  if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not set in Vercel environment variables');
+async function geminiText({ prompt, systemPrompt, maxTokens, history, key }) {
+  const GEM = key || GEMINI_API_KEY;
+  if (!GEM) throw new Error('No Gemini API key — paste your free key in the app (Get your free key link).');
   const contents = (history || []).map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: typeof m.content === 'string' ? m.content : '' }] }));
   contents.push({ role: 'user', parts: [{ text: prompt }] });
   const body = { contents, generationConfig: { maxOutputTokens: maxTokens || 1000 } };
   if (systemPrompt) body.systemInstruction = { parts: [{ text: systemPrompt }] };
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + GEMINI_API_KEY;
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + GEM;
   const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
   if (!r.ok) throw new Error('Gemini ' + r.status + ': ' + (await r.text()));
   const data = await r.json();
@@ -54,23 +55,26 @@ async function openaiChat(endpoint, key, model, { prompt, systemPrompt, maxToken
 
 // ---- Groq (free, fast) ----
 async function groqText(opts) {
-  if (!GROQ_API_KEY) throw new Error('GROQ_API_KEY not set in Vercel environment variables');
-  return openaiChat('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, 'llama-3.3-70b-versatile', opts);
+  const GK = opts.key || GROQ_API_KEY;
+  if (!GK) throw new Error('No Groq API key — paste your free key in the app (Get your free key link).');
+  return openaiChat('https://api.groq.com/openai/v1/chat/completions', GK, 'llama-3.3-70b-versatile', opts);
 }
 
 // ---- OpenRouter (free DeepSeek / Qwen) ----
 async function openrouterText(model, opts) {
-  if (!OPENROUTER_API_KEY) throw new Error('OPENROUTER_API_KEY not set in Vercel environment variables');
-  return openaiChat('https://openrouter.ai/api/v1/chat/completions', OPENROUTER_API_KEY, model, opts, { 'X-Title': 'Webnovel Studio' });
+  const OR = opts.key || OPENROUTER_API_KEY;
+  if (!OR) throw new Error('No OpenRouter API key — paste your key in the app.');
+  return openaiChat('https://openrouter.ai/api/v1/chat/completions', OR, model, opts, { 'X-Title': 'Webnovel Studio' });
 }
 
 // ---- Claude (paid) ----
-async function claudeText({ prompt, systemPrompt, maxTokens, history }) {
-  if (!ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY not set in Vercel environment variables');
+async function claudeText({ prompt, systemPrompt, maxTokens, history, key }) {
+  const AK = key || ANTHROPIC_API_KEY;
+  if (!AK) throw new Error('No Claude API key — paste your Anthropic key in the app.');
   const messages = [...(history || []), { role: 'user', content: prompt }];
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+    headers: { 'content-type': 'application/json', 'x-api-key': AK, 'anthropic-version': '2023-06-01' },
     body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: maxTokens || 1000, ...(systemPrompt ? { system: systemPrompt } : {}), messages })
   });
   if (!r.ok) throw new Error('Claude ' + r.status + ': ' + (await r.text()));
@@ -85,9 +89,10 @@ const PROVIDERS = {
   qwen:     (o) => openrouterText(QWEN_MODEL, o), // kept only so a user who explicitly picks Qwen gets a clear "retired" error, not a silent charge
   claude:   claudeText
 };
-// Qwen's free slug is dead on OpenRouter — removed from the auto-fallback chain so a buyer on a "free" engine
-// never gets silently routed into it (which would now be a PAID call on your OpenRouter balance).
-const FREE_ORDER = ['gemini', 'groq', 'deepseek'];
+// Qwen AND DeepSeek free slugs are both dead on OpenRouter (retired to paid-only) — removed from the
+// auto-fallback chain so a buyer on a "free" engine never gets silently routed into a 404 or a PAID call.
+// Only Gemini and Groq remain genuinely free. If OpenRouter ever restores a free slug, add it back here.
+const FREE_ORDER = ['gemini', 'groq'];
 
 function hasKey(p) {
   if (p === 'gemini') return !!GEMINI_API_KEY;
@@ -110,13 +115,14 @@ module.exports = async (req, res) => {
     const prompt = b.prompt;
     if (!prompt) return res.status(400).json({ error: 'prompt required' });
     const requested = (b.provider || 'gemini').toLowerCase();
-    const opts = { prompt, systemPrompt: b.systemPrompt || b.system || '', maxTokens: b.maxTokens || 1000, history: b.history || [] };
+    // BYOK: the buyer's own API key travels with the request and is used ahead of any server env key.
+    const opts = { prompt, systemPrompt: b.systemPrompt || b.system || '', maxTokens: b.maxTokens || 1000, history: b.history || [], key: b.apiKey || '' };
 
     // Build the attempt chain. Claude (paid) never auto-falls back.
-    // lockEngine: the frontend can ask to skip auto-fallback entirely — fail loudly instead of
-    // silently substituting a different model, so a long book's voice doesn't drift chapter to chapter.
+    // lockEngine: skip auto-fallback and fail loudly instead of silently switching models.
+    // BYOK: a buyer key only works for its own provider, so never fall back to a different engine.
     let chain;
-    if (requested === 'claude' || b.lockEngine) {
+    if (requested === 'claude' || b.lockEngine || b.apiKey) {
       chain = [requested];
     } else {
       chain = [requested, ...FREE_ORDER.filter(p => p !== requested)].filter(p => PROVIDERS[p] && hasKey(p));
