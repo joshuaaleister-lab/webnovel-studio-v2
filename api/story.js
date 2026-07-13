@@ -7,6 +7,7 @@ const ANTHROPIC_API_KEY  = process.env.ANTHROPIC_API_KEY  || '';
 const GEMINI_API_KEY     = process.env.GEMINI_API_KEY     || '';
 const GROQ_API_KEY       = process.env.GROQ_API_KEY       || '';
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
+const MISTRAL_API_KEY    = process.env.MISTRAL_API_KEY    || '';
 
 // OpenRouter free model slugs — if one is ever retired, swap it here.
 // Browse current free models at https://openrouter.ai/models?max_price=0
@@ -32,7 +33,7 @@ async function geminiText({ prompt, systemPrompt, maxTokens, history, key }) {
   contents.push({ role: 'user', parts: [{ text: prompt }] });
   const body = { contents, generationConfig: { maxOutputTokens: maxTokens || 1000, temperature: 0.95, topP: 0.97 } };
   if (systemPrompt) body.systemInstruction = { parts: [{ text: systemPrompt }] };
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + GEM;
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + GEM;
   const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
   if (!r.ok) throw new Error('Gemini ' + r.status + ': ' + (await r.text()));
   const data = await r.json();
@@ -67,6 +68,13 @@ async function openrouterText(model, opts) {
   return openaiChat('https://openrouter.ai/api/v1/chat/completions', OR, model, opts, { 'X-Title': 'Webnovel Studio' });
 }
 
+// ---- Mistral (free experiment tier) ----
+async function mistralText(opts) {
+  const MK = opts.key || MISTRAL_API_KEY;
+  if (!MK) throw new Error('No Mistral API key — paste your free key in the app (Get your free key link).');
+  return openaiChat('https://api.mistral.ai/v1/chat/completions', MK, 'mistral-small-latest', opts);
+}
+
 // ---- Claude (paid) ----
 async function claudeText({ prompt, systemPrompt, maxTokens, history, key }) {
   const AK = key || ANTHROPIC_API_KEY;
@@ -85,6 +93,7 @@ async function claudeText({ prompt, systemPrompt, maxTokens, history, key }) {
 const PROVIDERS = {
   gemini:   geminiText,
   groq:     groqText,
+  mistral:  mistralText,
   deepseek: (o) => openrouterText(DEEPSEEK_MODEL, o),
   qwen:     (o) => openrouterText(QWEN_MODEL, o), // kept only so a user who explicitly picks Qwen gets a clear "retired" error, not a silent charge
   claude:   claudeText
@@ -92,11 +101,12 @@ const PROVIDERS = {
 // Qwen AND DeepSeek free slugs are both dead on OpenRouter (retired to paid-only) — removed from the
 // auto-fallback chain so a buyer on a "free" engine never gets silently routed into a 404 or a PAID call.
 // Only Gemini and Groq remain genuinely free. If OpenRouter ever restores a free slug, add it back here.
-const FREE_ORDER = ['gemini', 'groq'];
+const FREE_ORDER = ['gemini', 'groq', 'mistral'];
 
 function hasKey(p) {
   if (p === 'gemini') return !!GEMINI_API_KEY;
   if (p === 'groq') return !!GROQ_API_KEY;
+  if (p === 'mistral') return !!MISTRAL_API_KEY;
   if (p === 'deepseek' || p === 'qwen') return !!OPENROUTER_API_KEY;
   if (p === 'claude') return !!ANTHROPIC_API_KEY;
   return false;
