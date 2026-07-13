@@ -321,6 +321,7 @@ h1{font-size:26px;}
       <select id="mode">
         <option value="gemini" selected>Gemini — free (best free prose)</option>
         <option value="groq">Groq — free &amp; fast</option>
+        <option value="mistral">Mistral — free (literary voice)</option>
         <option value="hybrid">Claude — best prose (paid)</option>
       </select>
     </div>
@@ -727,7 +728,7 @@ function showApp(){
     };
     // Keep the "Get your free key" link in sync with the chosen engine
     function syncObLink(){
-      const km={"gemini":"https://aistudio.google.com/apikey","groq":"https://console.groq.com/keys","hybrid":"https://console.anthropic.com"};
+      const km={"gemini":"https://aistudio.google.com/apikey","groq":"https://console.groq.com/keys","mistral":"https://console.mistral.ai/api-keys","hybrid":"https://console.anthropic.com"};
       const sel=document.getElementById("mode");
       const lk=document.getElementById("obKeyLink");
       if(lk&&sel) lk.href=km[sel.value]||km["gemini"];
@@ -1236,6 +1237,7 @@ function lockEngineOn(){const el=document.getElementById("lockEngine");return el
 const KEY_META={
   gemini:{link:"https://aistudio.google.com/apikey",hint:"Free from Google AI Studio — no credit card. Takes 2 minutes. Saved only on this device."},
   groq:{link:"https://console.groq.com/keys",hint:"Free from Groq — fast. Saved only on this device."},
+  mistral:{link:"https://console.mistral.ai/api-keys",hint:"Free from Mistral (Experiment tier) — no credit card. Saved only on this device."},
   claude:{link:"https://console.anthropic.com/settings/keys",hint:"From the Anthropic Console — Claude is paid (best prose). Saved only on this device."}
 };
 function getApiKeys(){try{return JSON.parse(localStorage.getItem("wns-api-keys"))||{};}catch{return {};}}
