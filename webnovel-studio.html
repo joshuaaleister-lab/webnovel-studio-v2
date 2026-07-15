@@ -1782,6 +1782,35 @@ function sceneDirective(){
 }
 // scene types that must NOT write into present-day timeline/canon/threads
 function sceneIsNonLinear(){const v=sceneInfo();return v==="flashback"||v==="dream";}
+// POV/SCENE CONTINUITY — when this chapter follows a character other than whoever the previous
+// chapter ended on (a POV switch, a cut to a parallel scene), the model only ever saw the LAST
+// chapter's tail. It has no idea what that other character was last doing, so it invents something
+// that can contradict their actual last scene. Fix: find each named character's own most recent
+// appearance and hand back its ending directly, so a scene-cut is accurate instead of a guess.
+function povContinuityBlock(dir){
+  const cast=parseCast(document.getElementById("cast").value);
+  if(!cast.length||!proj.chapters.length) return "";
+  const hay=(dir||"").toLowerCase();
+  const named=cast.filter(c=>c.name && hay.includes(c.name.toLowerCase()));
+  if(!named.length) return "";
+  const lastChapter=proj.chapters[proj.chapters.length-1];
+  const out=[];
+  named.forEach(c=>{
+    const nameLc=c.name.toLowerCase();
+    // is this character already covered by the normal previous-chapter tail? then skip — no need to duplicate.
+    if(lastChapter && lastChapter.text.slice(-1500).toLowerCase().includes(nameLc)) return;
+    // search backwards (excluding the very last chapter) for this character's most recent appearance
+    for(let i=proj.chapters.length-2;i>=0;i--){
+      const ch=proj.chapters[i];
+      if((ch.text||"").toLowerCase().includes(nameLc)){
+        out.push(`${c.name} — last seen in Chapter ${ch.n}, ending: "${ch.text.slice(-500).trim()}"`);
+        break;
+      }
+    }
+  });
+  if(!out.length) return "";
+  return "\nSCENE/POV CONTINUITY — GROUND TRUTH: this chapter's notes name a character who did NOT appear at the end of the immediately previous chapter. Do not invent where they are or what they're doing — pick up exactly from their own last scene below, then move forward from it accurately:\n"+out.join("\n\n")+"\n";
+}
 function updatePowerHint(){const el=document.getElementById("powerHint");if(!el)return;const k=document.getElementById("powerSystem").value;const ps=POWER_SYSTEMS[k];el.textContent=ps?ps.hint:"";}
 function styleGuide(){const s=(proj.setup.style)||"web";if(s==="literary")return"Write in a dark literary style: precise imagery, deep interiority, varied sentence rhythm. Atmosphere through concrete specific detail never stock phrases. Show emotion through action and behaviour never label feelings. End on a hook or unresolved wrongness.";if(s==="balanced")return"Write in an engaging balanced commercial-fiction style with clear momentum and scene-driven prose.";return"Write in a polished web-serial style optimized for chapter-by-chapter serialization: open with a hook in the first 1-2 lines; keep scene momentum and forward drive; favor active voice and concrete sensory detail; give the chapter a clear emotional or plot payoff; and END on a hook, reversal, or unresolved question that pulls the reader to the next chapter. Avoid info-dumps - reveal world and backstory through action and dialogue. Keep paragraphs tight and readable on mobile.";}
 function recentBeats(){return proj.beats.slice(-8).map((b,i)=>`(Ch${proj.beats.length-Math.min(8,proj.beats.length)+i+1}) ${b}`).join("\n");}
@@ -2091,8 +2120,10 @@ async function humanizeChapter(idx){
     const sys="You are a specialist editor who removes statistical AI-writing patterns from fiction — not just surface clichés, but the deep structural signals that AI detectors measure: uniform sentence rhythm, hedge vocabulary, emotional summarizing, balanced parallel structures, and statistically predictable word choices. You preserve every plot event, dialogue beat, and character action exactly. You change only HOW it is written.";
     const p=`Rewrite the chapter below so it reads as naturally human-written fiction. Change only the writing — never the story.
 
-STRUCTURAL PATTERNS TO BREAK (what detectors actually measure):
-- Sentence burstiness: AI produces sentences of similar length. Break this. Aim for at least 3 dramatically short sentences (under 7 words, even fragments) per page mixed among longer ones.
+RULE ZERO — COHERENCE FIRST: every sentence must be grammatically complete and make immediate literal sense on first read. Never sacrifice clarity for rhythm. If following a style rule below would produce a fragment that doesn't parse as a real sentence, or would repeat a beat, image, or line you already wrote, skip that rule for that sentence. Do NOT write two paragraphs that describe the same moment or action twice, even in different words — each beat happens exactly ONCE.
+
+STRUCTURAL PATTERNS TO BREAK (what detectors actually measure) — apply these with restraint, not to every sentence:
+- Sentence burstiness: AI produces sentences of similar length. Break this occasionally — a short, complete sentence here and there, not fragment after fragment. Most sentences should still be normal full sentences.
 - Predictable paragraph openings: if two consecutive paragraphs open the same way (both start with character name, both start with "The", both start with a -ing clause), change one.
 - Balanced parallel structures: "She was tired, afraid, and alone" → break the parallel, make it uneven and specific.
 - Emotion statements: never name emotions directly. Convert every "she felt X" / "he was X" into a physical detail, a behavior, or a wrong choice the character makes.
@@ -2110,7 +2141,7 @@ DIALOGUE — make it messier. People interrupt, trail off, answer a different qu
 
 SENSORY DETAILS — every one must be specific and surprising. Replace generic details with precise, unexpected ones ("the wet-copper smell of rain on hot asphalt" not "the smell of rain").
 
-KEEP: every plot event, reveal, dialogue meaning, character action, POV, genre tone, and roughly the same length (±10%). Do NOT add new events, summarize, or change what happens.
+KEEP: every plot event, reveal, dialogue meaning, character action, POV, genre tone, and roughly the same length (±10%). Do NOT add new events, summarize, or change what happens. Do NOT duplicate, restate, or write a second version of any paragraph, action, or line of dialogue that already appeared once — each moment in the source chapter must appear exactly once in your rewrite, in the same order.
 ${styleSample?"MATCH THIS VOICE (mirror its rhythm and word-level texture, not its content):\n\"\"\"\n"+styleSample.slice(0,800)+"\n\"\"\"\n":""}
 Output ONLY the rewritten chapter prose — no title line, no commentary.
 
@@ -2232,7 +2263,7 @@ ABSOLUTE RULES:
 5. Every world rule in Canon notes must be respected.
 6. Do not recap previous chapters — continue forward.
 7. End on a hook or unresolved wrongness.${litrpg}`;
-const p=`STORY BIBLE:\n${proj.bible}\n\nCANON - NEVER CONTRADICT:\n${proj.canon||"(none set)"}\n${powerSystemGuide()}${genreGuide()}${structureGuide()}${coreCharsBlock(dir)}${stakesBlock()}${emotionDirective()}${sceneDirective()}${pacingDirective()}${cliffhangerDirective()}${styleRefBlock()}${inspiredBlock()}${humanizeBlock()}${dialogueCraftBlock()}${groundingBlock()}${threadHealthBlock(n)}${worldLedgerBlock()}\n${vaultCtx}${retrievedCtx}STORY SO FAR (recent recaps):\n${proj.beats.length?recentBeats():"(first chapter)"}\n\n${tail?`HOW THE PREVIOUS CHAPTER ENDED (its last lines):\n${tail}\n${transitionDirective()}\n`:""}\n${arcLine}${tentpoleBlock(n)}${storyStateBlock()}${arcStagesBlock()}${proj.goal?`STORY GOAL: ${proj.goal}\n`:""}\nCHARACTER ROSTER - NEVER show dead or unaccounted as alive:\n${sc||"(none set)"}\n${glossaryCtx}${voiceCtx}${phraseCtx}\nAUTHOR CHAPTER NOTES - FOLLOW EXACTLY:\n${dir||"(no notes - follow arc and canon)"}\n\nDO NOT: add characters not in notes; add beats not in notes; contradict canon; show dead characters as alive.\n\nWrite CHAPTER ${n}. HARD MINIMUM: ${words} words — do NOT end the chapter until you have written at least ${words} words. Top serialized web novels (Lord of the Mysteries, Shadow Slave) achieve this through layered scene-writing:
+const p=`STORY BIBLE:\n${proj.bible}\n\nCANON - NEVER CONTRADICT:\n${proj.canon||"(none set)"}\n${powerSystemGuide()}${genreGuide()}${structureGuide()}${coreCharsBlock(dir)}${stakesBlock()}${emotionDirective()}${sceneDirective()}${pacingDirective()}${cliffhangerDirective()}${styleRefBlock()}${inspiredBlock()}${humanizeBlock()}${dialogueCraftBlock()}${groundingBlock()}${threadHealthBlock(n)}${worldLedgerBlock()}${povContinuityBlock(dir)}\n${vaultCtx}${retrievedCtx}STORY SO FAR (recent recaps):\n${proj.beats.length?recentBeats():"(first chapter)"}\n\n${tail?`HOW THE PREVIOUS CHAPTER ENDED (its last lines):\n${tail}\n${transitionDirective()}\n`:""}\n${arcLine}${tentpoleBlock(n)}${storyStateBlock()}${arcStagesBlock()}${proj.goal?`STORY GOAL: ${proj.goal}\n`:""}\nCHARACTER ROSTER - NEVER show dead or unaccounted as alive:\n${sc||"(none set)"}\n${glossaryCtx}${voiceCtx}${phraseCtx}\nAUTHOR CHAPTER NOTES - FOLLOW EXACTLY:\n${dir||"(no notes - follow arc and canon)"}\n\nDO NOT: add characters not in notes; add beats not in notes; contradict canon; show dead characters as alive.\n\nWrite CHAPTER ${n}. HARD MINIMUM: ${words} words — do NOT end the chapter until you have written at least ${words} words. Top serialized web novels (Lord of the Mysteries, Shadow Slave) achieve this through layered scene-writing:
 1. DEEP POV INTERIORITY — let the reader live inside the protagonist's thoughts, observations, micro-reactions, and internal reasoning. Don't just show what happens; show what the character notices, feels, and decides in real time.
 2. DIALOGUE RENDERED BEAT BY BEAT — include action beats, pauses, subtext, and body language between every 2-3 lines of dialogue. Never just exchange lines.
 3. SENSORY GROUNDING PER SCENE — every location gets smell, texture, sound, light. Ground the reader before moving them.
