@@ -31,7 +31,10 @@ async function geminiText({ prompt, systemPrompt, maxTokens, history, key }) {
   if (!GEM) throw new Error('No Gemini API key — paste your free key in the app (Get your free key link).');
   const contents = (history || []).map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: typeof m.content === 'string' ? m.content : '' }] }));
   contents.push({ role: 'user', parts: [{ text: prompt }] });
-  const body = { contents, generationConfig: { maxOutputTokens: maxTokens || 1000, temperature: 0.95, topP: 0.97 } };
+  // thinkingBudget: 0 — Gemini 2.5 Flash's default "thinking" mode eats into maxOutputTokens with
+  // hidden reasoning tokens, which can leave little/no room for the actual chapter text on long
+  // requests (empty or truncated responses). This app only needs final prose, not exposed reasoning.
+  const body = { contents, generationConfig: { maxOutputTokens: maxTokens || 1000, temperature: 0.95, topP: 0.97, thinkingConfig: { thinkingBudget: 0 } } };
   if (systemPrompt) body.systemInstruction = { parts: [{ text: systemPrompt }] };
   const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + GEM;
   const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
