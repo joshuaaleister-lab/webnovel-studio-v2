@@ -502,8 +502,8 @@ h1{font-size:26px;}
       <textarea id="promiseLog" rows="3" placeholder="[OPEN] Ch1: Pale patch where No.15 number should be"></textarea>
       <label class="label" for="deathLog" style="font-size:13px;margin-top:8px">Death and state-change log</label>
       <textarea id="deathLog" rows="3" placeholder="Ch14: The eroded Reckoner — UNACCOUNTED"></textarea>
-      <label class="label" for="openMysteriesLog" style="font-size:13px;margin-top:8px">Open mysteries</label>
-      <textarea id="openMysteriesLog" rows="3" placeholder="[OPEN] What spoke from No.15?"></textarea>
+      <label class="label" for="openMysteriesLog" style="font-size:13px;margin-top:8px">Open mysteries <span style="font-weight:400;color:var(--faint);font-size:12px">— use [PROTECTED] for a slow-burn meta-mystery that must NEVER get resolved early (a LotM/Shadow Slave-style long game)</span></label>
+      <textarea id="openMysteriesLog" rows="3" placeholder="[OPEN] What spoke from No.15?&#10;[PROTECTED] Klein's true identity as a Sequence 9 Fool"></textarea>
       <label class="label" for="storyStateBox" style="font-size:13px;margin-top:12px">Live story state <span style="font-weight:400;color:var(--faint);font-size:12px">— auto-updated each chapter; carried forward so details don't drift</span></label>
       <textarea id="storyStateBox" rows="3" placeholder="Auto-filled after each chapter: location, in-world time, who's present, injuries/conditions, immediate goal. You can edit it."></textarea>
       <label class="label" for="arcStagesBox" style="font-size:13px;margin-top:8px">Character arc stages <span style="font-weight:400;color:var(--faint);font-size:12px">— auto-tracked so characters actually change</span></label>
@@ -1619,7 +1619,7 @@ function mergeWorldLedger(block){
   if(adds.length){proj.worldLedger=(existing.length?existing.join("\n")+"\n":"")+adds.join("\n");if(el)el.value=proj.worldLedger;}
 }
 function arcStagesBlock(){return proj.arcStages?`\nCHARACTER ARC STAGES — advance these over time; a character must NOT believe the same lie or stay unchanged forever. Move at least one forward when natural:\n${proj.arcStages}\n`:"";}
-function openThreadsForPlan(){const a=(proj.promiseLog||"").split("\n").filter(l=>/\[OPEN\]/i.test(l));const b=(proj.openMysteriesLog||"").split("\n").map(l=>l.trim()).filter(Boolean);const all=a.concat(b).slice(-12);return all.length?all.join("\n"):"(none tracked yet — you may plant one)";}
+function openThreadsForPlan(){const a=(proj.promiseLog||"").split("\n").filter(l=>/\[OPEN\]/i.test(l));const b=(proj.openMysteriesLog||"").split("\n").map(l=>l.trim()).filter(Boolean).filter(l=>!/^\[PROTECTED\]/i.test(l));const all=a.concat(b).slice(-12);return all.length?all.join("\n"):"(none tracked yet — you may plant one)";}
 async function planChapter(n,arcLine,tail){
   try{
     setStatus("studioStatus",loadingHtml(`planning chapter ${n}…`));
@@ -1846,9 +1846,15 @@ function groundingBlock(){
 }
 // THREAD HEALTH — flags open-thread overload, and quietly asks for setup before a pinned turning point lands out of nowhere.
 function threadHealthBlock(n){
-  const openLines=(proj.openMysteriesLog||"").split("\n").map(l=>l.trim()).filter(l=>/\[OPEN\]/i.test(l));
+  const allLines=(proj.openMysteriesLog||"").split("\n").map(l=>l.trim()).filter(Boolean);
+  // [PROTECTED] threads (the author marks these manually) are meta-mysteries meant to stay unresolved
+  // for the long haul — e.g. LotM/Shadow Slave-style slow burns. They must never count toward the
+  // "too many loose ends, pay one off" pressure below, and the model must be told never to touch them.
+  const openLines=allLines.filter(l=>/^\[OPEN\]/i.test(l));
+  const protectedLines=allLines.filter(l=>/^\[PROTECTED\]/i.test(l));
   let s="";
   if(openLines.length>=8) s+="\nTHREAD LOAD: "+openLines.length+" threads are open and unresolved. Prioritize paying off at least one older thread rather than only planting new ones — readers lose patience with too many loose ends.\n";
+  if(protectedLines.length) s+="\nPROTECTED THREADS — NEVER resolve, hint at a resolution for, or meaningfully advance toward closing any of these, no matter how many other threads you pay off this chapter. They are reserved for a major future reveal:\n"+protectedLines.map(l=>"- "+l.replace(/^\[PROTECTED\]\s*/i,"")).join("\n")+"\n";
   const nt=(typeof nextTentpole==="function")?nextTentpole(n):null;
   if(nt && nt.ch>n && (nt.ch-n)<=4){
     s+="\nUPCOMING TURN: chapter "+nt.ch+" is pinned to: \""+nt.event+"\". If it fits naturally here, quietly plant a seed, clue, or setup that will make that turn feel earned when it lands — don't telegraph it outright, but don't let it come from nowhere either.\n";
