@@ -102,7 +102,9 @@ textarea{resize:vertical;}
 .rm-ch h2{font-family:'Fraunces',serif;font-weight:600;font-size:27px;color:var(--gold-2);margin:0 0 20px;line-height:1.25;}
 .rm-overlay.theme-sepia .rm-ch h2{color:#7a5a1e;}
 .rm-overlay.theme-night .rm-ch h2{color:#9fb2c8;}
-.rm-ch p{margin:0 0 16px;}
+.rm-ch p{margin:0 0 16px;cursor:pointer;border-radius:4px;transition:background .12s;}
+.rm-ch p:hover{background:rgba(216,169,78,.08);}
+.rm-ch p.rm-flagged{background:rgba(187,74,49,.14);box-shadow:inset 3px 0 0 var(--crimson);padding-left:10px;}
 .rm-sep{text-align:center;color:var(--faint);margin:52px 0;letter-spacing:.55em;font-size:12px;}
 @media(max-width:680px){.rm-wrap{padding:24px 16px 110px;}.rm-ch h2{font-size:22px;}}
 .cover img{width:100%;max-width:300px;border-radius:5px;border:1px solid var(--line);display:block;margin:0 auto 8px;}
@@ -287,9 +289,12 @@ h1{font-size:26px;}
     <button class="rbtn" data-rmtheme="dark">Dark</button>
     <button class="rbtn" data-rmtheme="sepia">Sepia</button>
     <button class="rbtn" data-rmtheme="night">Night</button>
+    <span class="rp-sep">·</span>
+    <button class="rbtn" id="rmFlagsBtn" title="Notes you flagged while reading">🚩 <span id="rmFlagCount">0</span></button>
     <span style="flex:1"></span>
     <span class="mini" id="rmMeta"></span>
   </div>
+  <div id="rmFlagsPanel" style="display:none;position:sticky;top:0;z-index:2;max-height:40vh;overflow:auto;background:rgba(12,10,6,.96);border-bottom:1px solid var(--line);padding:12px 16px"></div>
   <div class="rm-wrap" id="rmWrap"></div>
 </div>
 <div class="wrap" id="appWrap" style="display:none">
@@ -431,6 +436,8 @@ h1{font-size:26px;}
     <label class="label" for="inspiredBy">Inspired by <span style="font-weight:400;color:var(--faint);font-size:12px">— optional. Name touchstones and the AI emulates their <b>craft</b> (mood, rhythm, depth), never their story. Raises the quality bar; never copies.</span></label>
     <input id="inspiredBy" placeholder="e.g. the dread of classic gothic horror; the slow-burn structure of a literary mystery; the atmosphere of weird fiction" />
     <div class="mini" style="margin-top:4px">Describe the <i>feel and craft</i> you want, not a specific book to copy. Legal &amp; safe: styles and techniques aren't copyrightable; plots and text are.</div>
+    <div class="toolbar" style="margin-top:6px"><button class="btn btn-ghost" id="suggestTouchstones" style="font-size:12px;padding:6px 12px">Suggest genre touchstones</button></div>
+    <div id="touchstoneStatus"></div>
   </div>
   <div class="toolbar"><button class="btn btn-primary" id="buildBible">Build the story bible</button></div>
   <div id="setupStatus"></div>
@@ -462,6 +469,7 @@ h1{font-size:26px;}
   <div class="mini" id="bookStats" style="margin-top:4px;color:var(--faint)"></div>
   <div id="structureBar" class="sb-wrap" style="display:none"></div>
   <div id="arcAlert"></div>
+  <div id="tentpoleHint"></div>
   <div id="checkpointAlert" style="display:none;margin:8px 0">
     <div class="arc-alert">
       <strong>Editorial checkpoint due</strong>
@@ -595,6 +603,8 @@ h1{font-size:26px;}
     </label>
     <textarea id="direction" rows="5" placeholder="List beats IN ORDER. Name ONLY characters who appear. State what NOT to include.&#10;&#10;Example:&#10;ONLY Crane and supervisor appear. NO new characters.&#10;Beat 1: Crane files report.&#10;Beat 2: Supervisor non-reaction — closes drawer.&#10;Beat 3: Crane notices faded logbook ink.&#10;End: Crane realises supervisor was not surprised."></textarea>
     <div class="mini">The more specific your notes, the more accurately the AI follows them.</div>
+    <div class="toolbar" style="margin-top:6px"><button class="btn btn-ghost" id="beatDoctorBtn" style="font-size:12px;padding:6px 12px">Check these beats first</button></div>
+    <div id="beatDoctorStatus"></div>
     <div class="row" style="margin-top:9px">
       <div><label class="label" for="emotion" style="font-size:13px">Emotional tone <span style="font-weight:400;color:var(--faint);font-size:12px">— defaults to Auto: the AI reads the story and picks the right beat itself</span></label>
         <select id="emotion">
@@ -640,6 +650,7 @@ h1{font-size:26px;}
         <button class="btn btn-ghost" id="deepScanBtn" style="font-size:12px;padding:6px 12px">Deep-scan latest vs whole story</button>
         <select id="deepScanTarget" style="max-width:200px;font-size:12px;padding:6px"></select>
         <button class="btn btn-ghost" id="auditBtn" style="font-size:12px;padding:6px 12px">Audit whole book</button>
+        <button class="btn btn-ghost" id="craftCheckBtn" style="font-size:12px;padding:6px 12px">Craft check (metaphor/clarity/blocking)</button>
         <button class="btn btn-ghost" id="aiCheckBtn" style="font-size:12px;padding:6px 12px">Pre-publish check (AI traces)</button>
       </div>
       <div id="fixList" style="margin-top:8px"></div>
@@ -1274,7 +1285,7 @@ function activeGuide(){
 }
 
 let proj=newProject(),busy=false,stopFlag=false,activeChapter=-1,editing=false;
-function newProject(){return{setup:{},title:"Untitled",description:"",bible:"",chapters:[],beats:[],cover:"",canon:"",goal:"",cast:"",outline:"",erosionLog:"",promiseLog:"",deathLog:"",openMysteriesLog:"",notesHistory:[],vault:[],lastBackupAt:0,completedGuideChapters:[],voices:"",glossary:"",phrases:[],designs:{},guide:[],styleRef:"",humanize:true,coreChars:"",stakes:"",escalate:true,structure:"none",tentpoles:"",storyState:"",arcStages:"",architect:true,checkpointEvery:25,lastCheckpointAt:0,autoPolish:true,inspiredBy:"",worldLedger:"",novelChat:[]};}
+function newProject(){return{setup:{},title:"Untitled",description:"",bible:"",chapters:[],beats:[],cover:"",canon:"",goal:"",cast:"",outline:"",erosionLog:"",promiseLog:"",deathLog:"",openMysteriesLog:"",notesHistory:[],vault:[],lastBackupAt:0,completedGuideChapters:[],voices:"",glossary:"",phrases:[],designs:{},guide:[],styleRef:"",humanize:true,coreChars:"",stakes:"",escalate:true,structure:"none",tentpoles:"",storyState:"",arcStages:"",architect:true,checkpointEvery:25,lastCheckpointAt:0,autoPolish:true,inspiredBy:"",worldLedger:"",novelChat:[],chapterFlags:[]};}
 function backendBase(){return(document.getElementById("backendurl").value||"").trim().replace(/\/+$/,"");}
 function provider(){const v=document.getElementById("mode").value;return v==="hybrid"?"claude":v;}
 function isRateLimit(m){return /quota|exceed|rate|429|RESOURCE_EXHAUSTED|limit: 0/i.test(m||"");}
@@ -1523,6 +1534,39 @@ async function scoreConsistency(){if(proj.chapters.length<2)return;const last=pr
 
 let pendingFixes=[];
 function populateDeepScanTargets(){const sel=document.getElementById("deepScanTarget");if(!sel)return;const cur=sel.value;sel.innerHTML=proj.chapters.map((c,i)=>`<option value="${i}">Ch ${c.n}: ${esc(c.title).slice(0,30)}</option>`).join("");sel.value=cur&&(+cur)<proj.chapters.length?cur:String(proj.chapters.length-1);}
+// CRAFT CHECK — audits a chapter against its OWN craft rules (metaphor cap, action geography, physical
+// feasibility, scene turns) rather than continuity. Deep Scan checks "does this contradict the story";
+// this checks "was this well WRITTEN". Deliberately reuses pendingFixes/fixList/applyFix/applyAllFixes —
+// same proven, safe find/replace-only apply path, just a different lens on the same chapter.
+async function craftCheck(){
+  if(busy)return;
+  if(!proj.chapters.length){setStatus("studioStatus",`<div class="banner">Write a chapter first.</div>`);return;}
+  const idx=parseInt(document.getElementById("deepScanTarget").value,10);
+  const target=proj.chapters[idx];if(!target)return;
+  busy=true;document.getElementById("craftCheckBtn").disabled=true;
+  document.getElementById("fixList").innerHTML=loadingHtml(`craft-checking Chapter ${target.n}...`);
+  try{
+    const sys="You are a fiction craft editor checking a chapter against specific, concrete writing-quality rules — not continuity, not plot. You find real violations and propose the SMALLEST possible text fix for each. Output ONLY a JSON object, nothing else.";
+    const p=`Check the chapter below against these SPECIFIC rules. Only flag REAL violations — do not invent nitpicks:\n1. METAPHOR CAP: more than 2-3 similes/metaphors total in the chapter is too many. If violated, pick the WORST 1-2 offending ones and propose replacing them with plain literal description.\n2. ACTION GEOGRAPHY: in any physical confrontation or fast action, is it unclear where people are standing, how far apart, or what a supernatural/abstract effect is doing in concrete physical terms? If so, flag the unclear passage.\n3. PHYSICAL FEASIBILITY: does a character do two hand-occupying actions at once that aren't physically possible (holding an object AND gripping someone AND pressing something, simultaneously)? Flag it.\n4. HEDGE VERBS / AI-TELLS: "seemed to", "a wave of", "couldn't help but", "as if on cue" and similar — flag if used more than once or twice.\n\nFor each real issue found, propose the SMALLEST possible edit: an EXACT substring "find" copied verbatim from the chapter, and a "replace" that fixes ONLY that issue. Do not rewrite unrelated text. If the chapter genuinely has no violations of these specific rules, return an empty issues array — do not force issues that aren't there.\n\nCHAPTER ${target.n} (full text):\n${target.text}\n\nOutput JSON exactly:\n{"score":0-100,"issues":[{"problem":"which rule was violated and why","find":"exact text from the chapter","replace":"the fix","note":"why this is better"}]}`;
+    const raw=await callStory(sys,p,1500);
+    const data=JSON.parse(raw.replace(/```json|```/g,"").trim());
+    const score=typeof data.score==="number"?data.score:null;
+    if(score!==null){const badge=score>=80?"score-high":score>=60?"score-mid":"score-low";document.getElementById("scoreBadge").innerHTML=`<span class="score-badge ${badge}">${score}/100 - craft check of Ch ${target.n}</span>`;document.getElementById("scoreWrap").style.display="block";}
+    pendingFixes=[];
+    const issues=(data.issues||[]).filter(it=>it&&it.find&&typeof it.find==="string");
+    if(!issues.length){document.getElementById("fixList").innerHTML=`<div class="ci2 pass">No craft-rule violations found in Chapter ${target.n}.</div>`;busy=false;document.getElementById("craftCheckBtn").disabled=false;return;}
+    let html=`<div class="mini" style="margin-bottom:6px">Found ${issues.length} possible craft issue(s) in Ch ${target.n}. Review each - click Apply to make ONLY that edit.</div>`;
+    issues.forEach((it,k)=>{
+      const present=target.text.includes(it.find);
+      pendingFixes.push(Object.assign({chapterIndex:idx,applicable:present},it));
+      html+=`<div class="ci2 ${present?"warn":"fail"}" style="margin-bottom:8px"><div><strong>Issue ${k+1}:</strong> ${esc(it.problem||"")}</div>${it.note?`<div style="color:var(--faint);font-size:12px">${esc(it.note)}</div>`:""}<div style="font-size:12px;margin-top:4px"><span style="color:var(--crimson)">- ${esc((it.find||"").slice(0,160))}</span><br><span style="color:var(--gold-2)">+ ${esc((it.replace||"").slice(0,160))}</span></div>${present?`<button class="rbtn ok-btn" style="margin-top:6px" data-fix="${k}">Apply this fix</button>`:`<div style="color:var(--crimson);font-size:12px;margin-top:4px">Can't auto-apply (text not found verbatim) - edit manually.</div>`}</div>`;
+    });
+    const _appl=pendingFixes.filter(f=>f&&f.applicable).length;
+    if(_appl>=2)html=`<button class="rbtn ok-btn" id="applyAllFixes" style="margin-bottom:8px">Apply all ${_appl} fixes</button>`+html;
+    document.getElementById("fixList").innerHTML=html;
+  }catch(e){document.getElementById("fixList").innerHTML=`<div class="ci2 fail">Craft check failed: ${esc(e.message)}${isRateLimit(e.message)?" (rate limit - wait or switch engine)":""}</div>`;}
+  busy=false;document.getElementById("craftCheckBtn").disabled=false;
+}
 async function deepScan(){if(busy)return;if(proj.chapters.length<2){setStatus("studioStatus",`<div class="banner">Need at least 2 chapters to deep-scan.</div>`);return;}const idx=parseInt(document.getElementById("deepScanTarget").value,10);const target=proj.chapters[idx];if(!target)return;busy=true;document.getElementById("deepScanBtn").disabled=true;document.getElementById("fixList").innerHTML=loadingHtml(`deep-scanning Chapter ${target.n} against the whole story...`);try{const canon=document.getElementById("canon").value;const facts=[document.getElementById("deathLog").value,document.getElementById("promiseLog").value,document.getElementById("openMysteriesLog").value,document.getElementById("erosionLog").value].filter(Boolean).join("\n");const vault=(proj.vault||[]).map(v=>`[Ch${v.start}-${v.end}]: ${v.summary}`).join("\n");const otherRecaps=proj.beats.map((b,i)=>i===idx?null:`(Ch${i+1}) ${b}`).filter(Boolean).join("\n");const sys="You are a meticulous continuity editor. You find concrete contradictions and propose minimal text fixes. Output ONLY a JSON object, nothing else.";const p=`Check the TARGET CHAPTER against everything below. Find concrete continuity errors only (wrong names, eye/hair color, a dead character acting alive, contradicted canon/rules, broken timeline, contradicted earlier facts). For each, propose the SMALLEST possible edit: an EXACT substring "find" copied verbatim from the target chapter, and a "replace" that fixes it. Do not rewrite for style. If no real errors, return an empty issues array.\n\nCANON / RULES:\n${canon||"(none)"}\n\nLOCKED SPELLINGS (flag ANY proper noun spelled differently):\n${glossaryTerms().join(" / ")||"(none)"}\n\nPERMANENT LOGS (deaths, promises, mysteries, erosion):\n${facts||"(none)"}\n\nARC MEMORY VAULT:\n${vault||"(none)"}\n\nALL OTHER CHAPTER RECAPS:\n${otherRecaps||"(none)"}\n\nTARGET CHAPTER ${target.n} (full text):\n${target.text}\n\nOutput JSON exactly:\n{"score":0-100,"issues":[{"problem":"what's wrong & which earlier fact it contradicts","find":"exact text from target chapter","replace":"corrected text","note":"why"}]}`;const raw=await callStory(sys,p,1500);const data=JSON.parse(raw.replace(/\`\`\`json|\`\`\`/g,"").trim());const score=typeof data.score==="number"?data.score:null;if(score!==null){const badge=score>=80?"score-high":score>=60?"score-mid":"score-low";document.getElementById("scoreBadge").innerHTML=`<span class="score-badge ${badge}">${score}/100 - deep scan of Ch ${target.n}</span>`;document.getElementById("scoreWrap").style.display="block";}pendingFixes=[];const issues=(data.issues||[]).filter(it=>it&&it.find&&typeof it.find==="string");if(!issues.length){document.getElementById("fixList").innerHTML=`<div class="ci2 pass">No concrete contradictions found in Chapter ${target.n}.</div>`;busy=false;document.getElementById("deepScanBtn").disabled=false;return;}let html=`<div class="mini" style="margin-bottom:6px">Found ${issues.length} possible issue(s) in Ch ${target.n}. Review each - click Apply to make ONLY that edit.</div>`;issues.forEach((it,k)=>{const present=target.text.includes(it.find);pendingFixes.push(Object.assign({chapterIndex:idx,applicable:present},it));html+=`<div class="ci2 ${present?"warn":"fail"}" style="margin-bottom:8px"><div><strong>Issue ${k+1}:</strong> ${esc(it.problem||"")}</div>${it.note?`<div style="color:var(--faint);font-size:12px">${esc(it.note)}</div>`:""}<div style="font-size:12px;margin-top:4px"><span style="color:var(--crimson)">- ${esc((it.find||"").slice(0,160))}</span><br><span style="color:var(--gold-2)">+ ${esc((it.replace||"").slice(0,160))}</span></div>${present?`<button class="rbtn ok-btn" style="margin-top:6px" data-fix="${k}">Apply this fix</button>`:`<div style="color:var(--crimson);font-size:12px;margin-top:4px">Can't auto-apply (text not found verbatim) - edit manually.</div>`}</div>`;});const _appl=pendingFixes.filter(f=>f&&f.applicable).length;if(_appl>=2)html=`<button class="rbtn ok-btn" id="applyAllFixes" style="margin-bottom:8px">Apply all ${_appl} fixes</button>`+html;document.getElementById("fixList").innerHTML=html;}catch(e){document.getElementById("fixList").innerHTML=`<div class="ci2 fail">Deep scan failed: ${esc(e.message)}${isRateLimit(e.message)?" (rate limit - wait or switch engine)":""}</div>`;}busy=false;document.getElementById("deepScanBtn").disabled=false;}
 function applyFix(k){const f=pendingFixes[k];if(!f||!f.applicable)return;const c=proj.chapters[f.chapterIndex];if(!c)return;if(!c.text.includes(f.find)){alert("The text changed - can't apply cleanly. Edit manually.");return;}if(!confirm(`Apply this fix to Chapter ${c.n}?\n\n- ${f.find.slice(0,200)}\n+ ${f.replace.slice(0,200)}`))return;c.text=c.text.replace(f.find,f.replace);proj.beats[f.chapterIndex]=c.text.replace(/[#*]/g," ").replace(/\s+/g," ").slice(0,180);f.applicable=false;save();renderStudio();const btn=document.querySelector(`[data-fix="${k}"]`);if(btn){btn.outerHTML=`<span style="color:var(--gold-2);font-size:12px">Applied</span>`;}}
 // Apply every still-applicable fix from the current scan in one pass. Each is a verbatim find/replace;
@@ -1719,6 +1763,18 @@ function renderStructureBar(){
    ============================================================ */
 function parseTentpoles(){return (proj.tentpoles||"").split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^(?:ch(?:apter)?\s*)?(\d+)\s*[|:\-–]\s*(.+)$/i);return m?{ch:+m[1],event:m[2].trim()}:null;}).filter(Boolean).sort((a,b)=>a.ch-b.ch);}
 function nextTentpole(n){return parseTentpoles().find(x=>x.ch>=n)||null;}
+// TENTPOLE ENGINE HINT — purely informational, never blocks or auto-switches anything. Not every
+// chapter matters equally to a reader; the pinned tentpole events (arc climaxes) are what's
+// remembered, so it's worth spending a stronger engine's call there specifically. Rendered near the
+// arc alert, refreshed at the same points chapter count changes — same call sites as checkArcTransition.
+function renderTentpoleHint(){
+  const el=document.getElementById("tentpoleHint");if(!el)return;
+  const n=(proj.chapters||[]).length+1; // the chapter about to be written
+  const t=parseTentpoles().find(x=>x.ch===n);
+  const curEngine=(typeof provider==="function")?provider():"";
+  if(!t||curEngine==="claude"){el.innerHTML="";return;}
+  el.innerHTML=`<div class="arc-alert" style="border-color:var(--gold)"><strong>Chapter ${n} is a pinned major turning point:</strong> "${esc(t.event)}"<br>This is the kind of chapter readers remember most — worth considering a stronger engine (Claude) for it specifically if you have a key set up. Purely optional; your current engine will write it fine either way.</div>`;
+}
 function tentpoleBlock(n){const t=parseTentpoles();if(!t.length)return "";const cur=t.filter(x=>x.ch<=n).slice(-1)[0];const nx=nextTentpole(n);let s="\nMAJOR TURNING POINTS — steer the story toward these; never stall or skip them:\n";if(cur&&cur.ch===n)s+=`- THIS CHAPTER (${n}) must deliver: ${cur.event}\n`;if(nx&&!(cur&&cur.ch===n))s+=`- NEXT MAJOR TURN at ch ${nx.ch}: ${nx.event} — build toward it now, don't mark time.\n`;return s;}
 function storyStateBlock(){return proj.storyState?`\nCURRENT STORY STATE — carry these details forward exactly; do not contradict them, update them only as this chapter changes them:\n${proj.storyState}\n`:"";}
 // World ledger — cumulative, append-only: character RELATIONSHIPS, notable LOCATIONS, and elapsed TIME.
@@ -1753,6 +1809,30 @@ async function planChapter(n,arcLine,tail){
     const out=(await callStory(sys,p,600)).trim();
     return out.length>20?out:"";
   }catch(e){return "";}
+}
+// BEAT DOCTOR — reviews the author's chapter notes BEFORE spending a full chapter-generation call.
+// A weak beat (no real obstacle, a twist already implied earlier, a protected mystery accidentally
+// touched) is far cheaper to catch here (a small ~200-token check) than after writing 2500+ words of
+// prose from it. Never modifies the notes itself — authorial text stays authorial; this only advises.
+async function beatDoctor(){
+  if(busy)return;
+  const dirEl=document.getElementById("direction");
+  const dir=(dirEl.value||"").trim();
+  const statusEl=document.getElementById("beatDoctorStatus");
+  if(!dir){statusEl.innerHTML=`<div class="banner">Notes are empty — Story Architect will plan this chapter automatically. Type your own beats here first if you want them checked.</div>`;return;}
+  busy=true;const btn=document.getElementById("beatDoctorBtn");btn.disabled=true;const o=btn.textContent;btn.textContent="Checking...";
+  statusEl.innerHTML=loadingHtml("checking these beats...");
+  try{
+    const n=(proj.chapters||[]).length+1;
+    const protectedThreads=(proj.openMysteriesLog||"").split("\n").map(l=>l.trim()).filter(l=>/^\[PROTECTED\]/i.test(l)).map(l=>l.replace(/^\[PROTECTED\]\s*/i,""));
+    const sys="You are a developmental editor doing a QUICK pre-check of chapter beats before they're expanded into prose. You are terse and concrete. Output ONLY a short bulleted list of real issues (max 4), or the single line 'No issues — beats look solid.' if there are none. Never rewrite the beats yourself; only point out problems.";
+    const p=`Review these chapter notes for weaknesses BEFORE they're written into a full chapter. Check specifically for:\n- No real obstacle/conflict in the beats (things just happen, nothing resists)\n- A "twist" or reveal that was already implied/stated in earlier chapters (see recaps below)\n- A named character used who isn't in the roster below\n- Accidentally resolving or hinting at the resolution of a PROTECTED mystery (listed below — these must stay untouched)\n- A contradiction with Canon (listed below)\n\nDo NOT comment on prose style — these are beats, not prose. Only flag REAL problems; if the beats are solid, say so.\n\nCANON:\n${(proj.canon||"").slice(0,1200)||"(none)"}\n\nCHARACTER ROSTER:\n${(proj.cast||"").slice(0,800)||"(none)"}\n\nPROTECTED MYSTERIES — must NOT be resolved or hinted at resolving:\n${protectedThreads.length?protectedThreads.join("\n"):"(none marked)"}\n\nRECENT CHAPTER RECAPS (to catch already-revealed twists):\n${(proj.beats||[]).slice(-6).join("\n")||"(first chapter)"}\n\nCHAPTER ${n} NOTES TO CHECK:\n${dir}`;
+    const out=(await callStory(sys,p,300)).trim();
+    const clean=out.replace(/^```[a-z]*\n?|```$/gi,"").trim();
+    const isGood=/no issues/i.test(clean)&&clean.length<80;
+    statusEl.innerHTML=`<div class="banner ${isGood?"ok":""}" style="white-space:pre-wrap">${esc(clean||"Couldn't get a clear read — try again.")}</div>`;
+  }catch(e){statusEl.innerHTML=`<div class="banner">${esc(e.message)}${isRateLimit(e.message)?" — rate limit. Wait and retry.":""}</div>`;}
+  busy=false;btn.disabled=false;btn.textContent=o;
 }
 async function genTentpoles(){
   if(busy)return;proj.bible=document.getElementById("bible").value;
@@ -1847,6 +1927,35 @@ function inspiredBlock(){
   const t=el?el.value.trim():(proj.inspiredBy||"").trim();
   if(!t) return "";
   return "\nCRAFT INSPIRATION — write with the craft qualities of: "+t+".\nEmulate ONLY the technique, atmosphere, structural feel, and emotional depth suggested — NEVER copy or echo any specific plot, character, setting, or wording from any existing work. Draw on the *skill*, invent everything else fresh and original to THIS story.\n";
+}
+// GENRE TOUCHSTONES — names real, famous, well-regarded works in the author's genre as CRAFT anchors
+// (structure, prose rhythm, pacing patterns) — the same legal footing as the existing "Inspired by"
+// field: styles/techniques aren't copyrightable, plots/characters/text are. The prompt explicitly
+// forbids naming plot events, character names, or specific scenes from the touchstones, and the
+// result only ever appends into "Inspired by" — it never overwrites what the author already wrote.
+async function suggestTouchstones(){
+  if(busy)return;
+  const genre=(document.getElementById("genre").value||(proj.setup&&proj.setup.genre)||"").trim();
+  const tone=(document.getElementById("tone").value||(proj.setup&&proj.setup.tone)||"").trim();
+  if(!genre){document.getElementById("touchstoneStatus").innerHTML=`<div class="banner">Fill in a Genre first.</div>`;return;}
+  busy=true;const btn=document.getElementById("suggestTouchstones");btn.disabled=true;const o=btn.textContent;btn.textContent="Thinking...";
+  const statusEl=document.getElementById("touchstoneStatus");
+  statusEl.innerHTML=loadingHtml("finding genre touchstones...");
+  try{
+    const sys="You recommend famous, well-regarded published novels/authors as CRAFT touchstones for a given genre — never as plots to copy. For each, name the real author or work, then ONE short craft descriptor: prose rhythm, structural pattern, pacing convention, or atmosphere technique. NEVER mention a specific plot event, twist, character name, or scene from any of them. Output ONLY a semicolon-separated list, no numbering, no preamble, no extra commentary.";
+    const p=`Genre: ${genre}${tone?` (tone: ${tone})`:""}\n\nName 4-6 real, well-known, well-regarded published novels or authors in this exact genre, each followed by " — " and a short craft-only descriptor (structure/prose/pacing technique, not plot). Format exactly like this example shape:\nBrandon Sanderson — meticulously fair, rule-bound magic systems; Robin Hobb — slow, interior emotional pacing`;
+    const out=(await callStory(sys,p,220)).trim();
+    if(!out){statusEl.innerHTML=`<div class="banner">No suggestions came back — try again.</div>`;busy=false;btn.disabled=false;btn.textContent=o;return;}
+    statusEl.innerHTML=`<div class="banner ok" style="margin-top:6px"><div style="margin-bottom:6px"><strong>Suggested touchstones</strong> — craft only, never plot:</div><div style="white-space:pre-wrap;font-style:normal;margin-bottom:8px">${esc(out)}</div><button class="rbtn ok-btn" id="useTouchstones">Add to Inspired by</button></div>`;
+    document.getElementById("useTouchstones").addEventListener("click",()=>{
+      const el=document.getElementById("inspiredBy");
+      const cur=el.value.trim();
+      el.value=cur?cur+"; "+out:out;
+      proj.inspiredBy=el.value;save();
+      statusEl.innerHTML=`<div class="banner ok">Added to Inspired by.</div>`;
+    });
+  }catch(e){statusEl.innerHTML=`<div class="banner">${esc(e.message)}${isRateLimit(e.message)?" — rate limit. Wait and retry.":""}</div>`;}
+  busy=false;btn.disabled=false;btn.textContent=o;
 }
 // Cliffhanger / opening variety — reads back recent chapter endings so hooks don't fall into the same shape.
 const ENDING_MODES=["a sudden REVELATION that reframes the chapter","a hard REVERSAL or betrayal","an ominous ARRIVAL or intrusion","a QUIET, unsettling image that lingers","a DECISION the protagonist can't take back","a QUESTION or threat left deliberately unanswered"];
@@ -2539,8 +2648,8 @@ function maybeLockVoice(){
   proj.styleRef=sample; proj._voiceLocked=true;
   if(styleEl)styleEl.value=sample;
 }
-async function writeOne(){if(busy)return;busy=true;stopFlag=false;document.getElementById("scoreWrap").style.display="none";document.getElementById("contCheckWrap").style.display="none";document.getElementById("writeOne").disabled=true;document.getElementById("autoWrite").disabled=true;setStatus("studioStatus",loadingHtml(`writing chapter ${proj.chapters.length+1}...`));try{await writeChapter();if(document.getElementById("autoPolish")&&document.getElementById("autoPolish").checked){setStatus("studioStatus",loadingHtml(`polishing chapter ${proj.chapters.length}…`));await autoPolishChapter(proj.chapters.length-1);}document.getElementById("direction").value="";document.getElementById("sceneType").value="normal";setStatus("studioStatus",`<div class="banner ok">Chapter written. Now: 1) Read it 2) Update Tracker tab 3) Click next chapter in the Chapter Guide below to load notes.</div>`+overdueThreadsBanner());renderStudio();save();renderNotesHist();checkArcTransition();checkBackupReminder();checkEditorialCheckpoint();runContinuityCheck(true);scoreConsistency();if(proj.chapters.length%10===0)compressVaultAuto();renderGuide(document.getElementById("guideSearch").value);}catch(e){setStatus("studioStatus",`<div class="banner">${esc(e.message)}${isRateLimit(e.message)?" - Rate limit. Wait and retry.":""}</div>`);}busy=false;document.getElementById("writeOne").disabled=false;document.getElementById("autoWrite").disabled=false;}
-async function autoWrite(){if(busy)return;stopFlag=false;busy=true;document.getElementById("writeOne").disabled=true;document.getElementById("autoWrite").disabled=true;document.getElementById("stop").style.display="inline-block";while(!stopFlag){if(proj.setup.target&&proj.chapters.length>=proj.setup.target)break;setStatus("studioStatus",loadingHtml(`auto-writing chapter ${proj.chapters.length+1}...`));try{await writeChapter();if(document.getElementById("autoPolish")&&document.getElementById("autoPolish").checked){setStatus("studioStatus",loadingHtml(`polishing chapter ${proj.chapters.length}…`));await autoPolishChapter(proj.chapters.length-1);}renderStudio();save();renderNotesHist();checkArcTransition();checkBackupReminder();checkEditorialCheckpoint();const _issues=runContinuityCheck(true).filter(r=>r.type==="fail");if(_issues.length)setStatus("studioStatus",`<div class="banner warn">Ch${proj.chapters.length} written — continuity flag: ${esc(_issues[0].msg)} (see Continuity check)</div>`);if(proj.chapters.length%10===0)compressVaultAuto();}catch(e){setStatus("studioStatus",`<div class="banner">Paused at ch${proj.chapters.length+1}: ${esc(e.message)}${isRateLimit(e.message)?" - rate limit. Wait then resume.":""}</div>`);break;}await new Promise(r=>setTimeout(r,900));}document.getElementById("stop").style.display="none";busy=false;document.getElementById("writeOne").disabled=false;document.getElementById("autoWrite").disabled=false;}
+async function writeOne(){if(busy)return;busy=true;stopFlag=false;document.getElementById("scoreWrap").style.display="none";document.getElementById("contCheckWrap").style.display="none";document.getElementById("writeOne").disabled=true;document.getElementById("autoWrite").disabled=true;setStatus("studioStatus",loadingHtml(`writing chapter ${proj.chapters.length+1}...`));try{await writeChapter();if(document.getElementById("autoPolish")&&document.getElementById("autoPolish").checked){setStatus("studioStatus",loadingHtml(`polishing chapter ${proj.chapters.length}…`));await autoPolishChapter(proj.chapters.length-1);}document.getElementById("direction").value="";document.getElementById("sceneType").value="normal";setStatus("studioStatus",`<div class="banner ok">Chapter written. Now: 1) Read it 2) Update Tracker tab 3) Click next chapter in the Chapter Guide below to load notes.</div>`+overdueThreadsBanner());renderStudio();save();renderNotesHist();checkArcTransition();renderTentpoleHint();checkBackupReminder();checkEditorialCheckpoint();runContinuityCheck(true);scoreConsistency();if(proj.chapters.length%10===0)compressVaultAuto();renderGuide(document.getElementById("guideSearch").value);}catch(e){setStatus("studioStatus",`<div class="banner">${esc(e.message)}${isRateLimit(e.message)?" - Rate limit. Wait and retry.":""}</div>`);}busy=false;document.getElementById("writeOne").disabled=false;document.getElementById("autoWrite").disabled=false;}
+async function autoWrite(){if(busy)return;stopFlag=false;busy=true;document.getElementById("writeOne").disabled=true;document.getElementById("autoWrite").disabled=true;document.getElementById("stop").style.display="inline-block";while(!stopFlag){if(proj.setup.target&&proj.chapters.length>=proj.setup.target)break;setStatus("studioStatus",loadingHtml(`auto-writing chapter ${proj.chapters.length+1}...`));try{await writeChapter();if(document.getElementById("autoPolish")&&document.getElementById("autoPolish").checked){setStatus("studioStatus",loadingHtml(`polishing chapter ${proj.chapters.length}…`));await autoPolishChapter(proj.chapters.length-1);}renderStudio();save();renderNotesHist();checkArcTransition();renderTentpoleHint();checkBackupReminder();checkEditorialCheckpoint();const _issues=runContinuityCheck(true).filter(r=>r.type==="fail");if(_issues.length)setStatus("studioStatus",`<div class="banner warn">Ch${proj.chapters.length} written — continuity flag: ${esc(_issues[0].msg)} (see Continuity check)</div>`);if(proj.chapters.length%10===0)compressVaultAuto();}catch(e){setStatus("studioStatus",`<div class="banner">Paused at ch${proj.chapters.length+1}: ${esc(e.message)}${isRateLimit(e.message)?" - rate limit. Wait then resume.":""}</div>`);break;}await new Promise(r=>setTimeout(r,900));}document.getElementById("stop").style.display="none";busy=false;document.getElementById("writeOne").disabled=false;document.getElementById("autoWrite").disabled=false;}
 function checkBackupReminder(){if(proj.chapters.length-(proj.lastBackupAt||0)>=20)document.getElementById("backupReminder").style.display="block";}
 // EDITORIAL CHECKPOINT — a long book left fully unsupervised drifts: duplicate canon facts pile up,
 // threads go stale, voice can slide chapter to chapter. This is a free, local (no API cost) nudge
@@ -2803,7 +2912,7 @@ async function doImportChapters(){
 }
 
 function hydrate(){const s=proj.setup||{};document.getElementById("idea").value=s.idea||"";document.getElementById("genre").value=s.genre||"";document.getElementById("tone").value=s.tone||"";if(s.pov)document.getElementById("pov").value=s.pov;if(s.length)document.getElementById("length").value=String(s.length);if(s.target)document.getElementById("target").value=s.target;if(s.style)document.getElementById("style").value=s.style;if(s.powerSystem)document.getElementById("powerSystem").value=s.powerSystem;updatePowerHint();if(s.structure)document.getElementById("structure").value=s.structure;updateStructureHint();document.getElementById("litrpg").checked=!!s.litrpg;if(document.getElementById("projDesc"))document.getElementById("projDesc").value=proj.description||"";
-document.getElementById("bible").value=proj.bible||"";document.getElementById("canon").value=proj.canon||"";document.getElementById("goal").value=proj.goal||"";document.getElementById("cast").value=proj.cast||"";document.getElementById("outline").value=proj.outline||"";document.getElementById("erosionLog").value=proj.erosionLog||"";document.getElementById("promiseLog").value=proj.promiseLog||"";document.getElementById("deathLog").value=proj.deathLog||"";document.getElementById("openMysteriesLog").value=proj.openMysteriesLog||"";document.getElementById("voices").value=proj.voices||"";document.getElementById("glossary").value=proj.glossary||"";document.getElementById("styleRef").value=proj.styleRef||"";document.getElementById("humanize").checked=proj.humanize!==false;document.getElementById("coreChars").value=proj.coreChars||"";document.getElementById("stakes").value=proj.stakes||"";if(document.getElementById("escalate"))document.getElementById("escalate").checked=proj.escalate!==false;if(document.getElementById("tentpoles"))document.getElementById("tentpoles").value=proj.tentpoles||"";if(document.getElementById("storyStateBox"))document.getElementById("storyStateBox").value=proj.storyState||"";if(document.getElementById("arcStagesBox"))document.getElementById("arcStagesBox").value=proj.arcStages||"";if(document.getElementById("architect"))document.getElementById("architect").checked=proj.architect!==false;if(document.getElementById("autoPolish"))document.getElementById("autoPolish").checked=!!proj.autoPolish;if(document.getElementById("inspiredBy"))document.getElementById("inspiredBy").value=proj.inspiredBy||"";if(document.getElementById("worldLedgerBox"))document.getElementById("worldLedgerBox").value=proj.worldLedger||"";if(document.getElementById("checkpointEvery"))document.getElementById("checkpointEvery").value=proj.checkpointEvery||25;if(proj.emotion)document.getElementById("emotion").value=proj.emotion;if(proj.bible){["biblePanel","studioPanel","guidePanel","novelBotPanel"].forEach(id=>document.getElementById(id).style.display="block");}activeChapter=proj.chapters.length-1;renderStudio();renderNotesHist();checkArcTransition();checkEditorialCheckpoint();renderGuide();renderNovelChat();
+document.getElementById("bible").value=proj.bible||"";document.getElementById("canon").value=proj.canon||"";document.getElementById("goal").value=proj.goal||"";document.getElementById("cast").value=proj.cast||"";document.getElementById("outline").value=proj.outline||"";document.getElementById("erosionLog").value=proj.erosionLog||"";document.getElementById("promiseLog").value=proj.promiseLog||"";document.getElementById("deathLog").value=proj.deathLog||"";document.getElementById("openMysteriesLog").value=proj.openMysteriesLog||"";document.getElementById("voices").value=proj.voices||"";document.getElementById("glossary").value=proj.glossary||"";document.getElementById("styleRef").value=proj.styleRef||"";document.getElementById("humanize").checked=proj.humanize!==false;document.getElementById("coreChars").value=proj.coreChars||"";document.getElementById("stakes").value=proj.stakes||"";if(document.getElementById("escalate"))document.getElementById("escalate").checked=proj.escalate!==false;if(document.getElementById("tentpoles"))document.getElementById("tentpoles").value=proj.tentpoles||"";if(document.getElementById("storyStateBox"))document.getElementById("storyStateBox").value=proj.storyState||"";if(document.getElementById("arcStagesBox"))document.getElementById("arcStagesBox").value=proj.arcStages||"";if(document.getElementById("architect"))document.getElementById("architect").checked=proj.architect!==false;if(document.getElementById("autoPolish"))document.getElementById("autoPolish").checked=!!proj.autoPolish;if(document.getElementById("inspiredBy"))document.getElementById("inspiredBy").value=proj.inspiredBy||"";if(document.getElementById("worldLedgerBox"))document.getElementById("worldLedgerBox").value=proj.worldLedger||"";if(document.getElementById("checkpointEvery"))document.getElementById("checkpointEvery").value=proj.checkpointEvery||25;if(proj.emotion)document.getElementById("emotion").value=proj.emotion;if(proj.bible){["biblePanel","studioPanel","guidePanel","novelBotPanel"].forEach(id=>document.getElementById(id).style.display="block");}activeChapter=proj.chapters.length-1;renderStudio();renderNotesHist();checkArcTransition();renderTentpoleHint();checkEditorialCheckpoint();renderGuide();renderNovelChat();
   // Auto-generate description for existing projects that have a bible but no description yet
   if(proj.bible&&!proj.description){
     (async()=>{try{const blurb=await callStory("You are a book marketing copywriter. Write a compelling back-cover blurb.","Write a 2–3 sentence back-cover blurb for this novel. Hook the reader immediately. No spoilers. No genre labels. No author name. Output ONLY the blurb text.\n\nSTORY BIBLE:\n"+proj.bible.slice(0,2000),120);const b=blurb.trim();if(b){proj.description=b;const el=document.getElementById("projDesc");if(el)el.value=b;save();}}catch(_){}})();
@@ -2917,7 +3026,69 @@ function _rmFillNearby(){
     body.innerHTML=mdToHtml(proj.chapters[+s.dataset.i].text);
     body.style.minHeight="";           // estimate served its purpose; let real content set the height
     body.dataset.filled="1";
+    _rmApplyFlagHighlights(+s.dataset.i,body);
   }
+}
+// READER FLAGGING — click any paragraph while reading to flag it as needing another pass. Closes the
+// loop between "noticing something's off" and actually fixing it. Flags persist with the project.
+// Matched back to a paragraph by exact text — if a chapter is later edited, an old flag's paragraph
+// may no longer highlight, but the flag (chapter + your note) is never lost, just listed plainly.
+function _rmEnsureFlags(){ if(!proj.chapterFlags)proj.chapterFlags=[]; return proj.chapterFlags; }
+function _rmApplyFlagHighlights(chapterIdx,body){
+  const flags=_rmEnsureFlags().filter(f=>f.chapterIndex===chapterIdx);
+  if(!flags.length)return;
+  body.querySelectorAll("p").forEach(p=>{
+    const t=(p.textContent||"").trim().slice(0,200);
+    if(flags.some(f=>f.excerpt===t))p.classList.add("rm-flagged");
+  });
+}
+function rmToggleParagraphFlag(chapterIdx,pEl){
+  const flags=_rmEnsureFlags();
+  const text=(pEl.textContent||"").trim().slice(0,200);
+  if(!text)return;
+  const existingIdx=flags.findIndex(f=>f.chapterIndex===chapterIdx&&f.excerpt===text);
+  if(existingIdx>=0){
+    flags.splice(existingIdx,1);
+    pEl.classList.remove("rm-flagged");
+  }else{
+    // The flag itself (paragraph + chapter) is the important part; the note is a nice-to-have.
+    // Some browsers/policies disable window.prompt() entirely (it throws rather than returning null)
+    // — never let that take down the core flagging action.
+    let note="";
+    try{ note=(prompt("Optional note — what's off about this paragraph? (leave blank to just flag it)")||"").trim(); }catch(e){}
+    flags.push({chapterIndex:chapterIdx,chapterN:proj.chapters[chapterIdx]?proj.chapters[chapterIdx].n:null,excerpt:text,note,ts:Date.now()});
+    pEl.classList.add("rm-flagged");
+  }
+  save();
+  renderRmFlagCount();
+}
+function renderRmFlagCount(){
+  const el=document.getElementById("rmFlagCount"); if(el)el.textContent=String(_rmEnsureFlags().length);
+}
+function renderRmFlagsPanelContent(){
+  const panel=document.getElementById("rmFlagsPanel"); if(!panel)return;
+  const flags=_rmEnsureFlags();
+  panel.innerHTML=flags.length?flags.map((f,i)=>`<div class="ci2" style="margin-bottom:8px"><strong>Ch ${f.chapterN!=null?f.chapterN:"?"}:</strong> "${esc(f.excerpt.slice(0,110))}${f.excerpt.length>110?"...":""}"${f.note?`<div style="color:var(--faint);font-size:12px;margin-top:3px">Note: ${esc(f.note)}</div>`:""}<div style="margin-top:6px"><button class="rbtn" onclick="rmJumpToFlag(${i})">Open chapter</button> <button class="rbtn" onclick="rmRemoveFlag(${i})">Clear</button></div></div>`).join(""):`<div class="mini">No flags yet — click any paragraph while reading to flag it for another pass.</div>`;
+}
+function toggleRmFlagsPanel(){
+  const panel=document.getElementById("rmFlagsPanel");
+  if(panel.style.display==="block"){panel.style.display="none";return;}
+  renderRmFlagsPanelContent();
+  panel.style.display="block";
+}
+function rmRemoveFlag(i){
+  _rmEnsureFlags().splice(i,1);
+  save();
+  renderRmFlagCount();
+  renderRmFlagsPanelContent();
+}
+function rmJumpToFlag(i){
+  const f=_rmEnsureFlags()[i]; if(!f)return;
+  closeReadMode();
+  activeChapter=f.chapterIndex;
+  editing=false;
+  renderStudio();
+  const r=document.getElementById("reader"); if(r)r.scrollIntoView({behavior:"smooth",block:"start"});
 }
 function openReadMode(){
   const chs=proj.chapters||[];
@@ -2930,6 +3101,8 @@ function openReadMode(){
   applyReadModeTheme();
   ov.style.display="block";
   document.body.style.overflow="hidden"; // stop the page behind from scrolling too
+  document.getElementById("rmFlagsPanel").style.display="none";
+  renderRmFlagCount();
   const target=wrap.querySelector(`.rm-ch[data-i="${Math.max(0,activeChapter)}"]`);
   if(target)ov.scrollTop=Math.max(0,target.offsetTop-12); // pick up where you left off
   _rmFillNearby();
@@ -2971,10 +3144,21 @@ document.getElementById("rmFontDown").addEventListener("click",()=>{bumpReaderFo
 document.querySelectorAll('#readMode [data-rmtheme]').forEach(b=>b.addEventListener("click",()=>{setReaderTheme(b.dataset.rmtheme);applyReadModeTheme();}));
 let _rmTick=false;
 document.getElementById("readMode").addEventListener("scroll",()=>{ if(!_rmTick){_rmTick=true;requestAnimationFrame(()=>{_rmFillNearby();updateRmProgress();_rmTick=false;});} });
+document.getElementById("rmFlagsBtn").addEventListener("click",toggleRmFlagsPanel);
+// Delegated once on the persistent #rmWrap container — its innerHTML is rebuilt every open/close, but
+// the container element itself never is, so this listener keeps working across every read-mode session.
+document.getElementById("rmWrap").addEventListener("click",e=>{
+  const p=e.target.closest(".rm-body p"); if(!p)return;
+  const sec=e.target.closest(".rm-ch"); if(!sec)return;
+  rmToggleParagraphFlag(+sec.dataset.i,p);
+});
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&document.getElementById("readMode").style.display==="block")closeReadMode(); });
 document.getElementById("genTitle").addEventListener("click",genTitle);
 document.getElementById("genSynopsis").addEventListener("click",genSynopsis);
 document.getElementById("genCoverPrompt").addEventListener("click",genCoverPrompt);
+document.getElementById("suggestTouchstones").addEventListener("click",suggestTouchstones);
+document.getElementById("beatDoctorBtn").addEventListener("click",beatDoctor);
+document.getElementById("craftCheckBtn").addEventListener("click",craftCheck);
 document.getElementById("clearChaps").addEventListener("click",clearAllChapters);
 document.getElementById("newProjTop").addEventListener("click",createProject);
 document.getElementById("renameProj").addEventListener("click",renameProject);
