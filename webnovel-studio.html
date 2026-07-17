@@ -416,6 +416,7 @@ h1{font-size:26px;}
     <button class="btn btn-ghost" id="genTitle">Title ideas</button>
     <button class="btn btn-ghost" id="genSynopsis">Synopsis</button>
     <button class="btn btn-ghost" id="genCover">Generate cover</button>
+    <button class="btn btn-ghost" id="genCoverPrompt">Cover art prompt → ChatGPT</button>
     <button class="btn btn-ghost" id="dlCover">Download cover (600×800 JPG)</button>
     <button class="btn btn-ghost" id="uploadCoverBtn">Upload cover</button>
     <input type="file" id="coverFile" accept="image/*" style="display:none" />
@@ -2609,6 +2610,21 @@ function uploadCover(file){if(!file)return;if(!/^image\//.test(file.type)){alert
 function showExtra(label,text){const box=document.getElementById("bibleExtra");box.innerHTML=`<div class="banner ok" style="margin-top:9px"><div style="display:flex;align-items:center;gap:9px;margin-bottom:5px"><strong>${esc(label)}</strong><button class="rbtn" id="copyExtra">Copy</button></div><div style="white-space:pre-wrap;font-style:normal">${esc(text)}</div></div>`;document.getElementById("copyExtra").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(text);const b=document.getElementById("copyExtra");b.textContent="Copied";setTimeout(()=>b.textContent="Copy",1300);}catch{}});}
 async function genTitle(){if(busy)return;proj.bible=document.getElementById("bible").value;if(!proj.bible.trim()){document.getElementById("bibleExtra").innerHTML=`<div class="banner">Build story bible first.</div>`;return;}busy=true;const btn=document.getElementById("genTitle");btn.disabled=true;const o=btn.textContent;btn.textContent="Thinking...";try{showExtra("Title ideas",await callStory("You are a bestselling web-serial title strategist. No explanations.",`From this story bible give 8 original title options. Output ONLY a numbered list.\n\n${proj.bible}`,500));}catch(e){document.getElementById("bibleExtra").innerHTML=`<div class="banner">${esc(e.message)}</div>`;}busy=false;btn.disabled=false;btn.textContent=o;}
 async function genSynopsis(){if(busy)return;proj.bible=document.getElementById("bible").value;if(!proj.bible.trim()){document.getElementById("bibleExtra").innerHTML=`<div class="banner">Build story bible first.</div>`;return;}busy=true;const btn=document.getElementById("genSynopsis");btn.disabled=true;const o=btn.textContent;btn.textContent="Writing...";try{showExtra("Synopsis",await callStory("You are a web-novel blurb specialist. 110-170 words one punchy hook sell the question not the plot end on threat or promise.",`Write a synopsis.\n\n${proj.bible}`,700));}catch(e){document.getElementById("bibleExtra").innerHTML=`<div class="banner">${esc(e.message)}</div>`;}busy=false;btn.disabled=false;btn.textContent=o;}
+// COVER ART PROMPT — the blurb sells the book to readers; this sells the SCENE to an image model.
+// Produces a ready-to-paste prompt for ChatGPT/DALL-E/Midjourney. Deliberately demands NO text or
+// lettering: image models mangle typography, and a clean art plate lets you add the title yourself.
+async function genCoverPrompt(){
+  if(busy)return;
+  proj.bible=document.getElementById("bible").value;
+  if(!proj.bible.trim()){document.getElementById("bibleExtra").innerHTML=`<div class="banner">Build story bible first.</div>`;return;}
+  busy=true;const btn=document.getElementById("genCoverPrompt");btn.disabled=true;const o=btn.textContent;btn.textContent="Art-directing...";
+  try{
+    const sys="You are an art director who writes image-generation prompts for book covers. You output ONE paragraph, ready to paste into an image generator. No preamble, no options, no explanation.";
+    const p=`Write ONE image-generation prompt for the front cover of this novel. It must be a single flowing paragraph (roughly 60-110 words) and must specify, in this order:\n1. The single main subject (a figure, object, or place — ONE clear focal point, not a busy collage)\n2. The setting around it\n3. Composition for a vertical 2:3 portrait book cover, with clear empty space near the top where a title will be added later\n4. Lighting and mood\n5. A specific colour palette (name actual colours)\n6. An art style (e.g. painterly digital illustration, moody concept art, etc.)\n\nEnd the prompt with exactly: "vertical 2:3 book cover composition, no text, no letters, no words, no typography, no watermark".\n\nGround every detail in THIS story's world — no generic fantasy filler.\n\nTITLE: ${proj.title||"(untitled)"}\nGENRE: ${(proj.setup&&proj.setup.genre)||"(unspecified)"}\nTONE: ${(proj.setup&&proj.setup.tone)||"(unspecified)"}\n\nSTORY BIBLE:\n${proj.bible.slice(0,2200)}`;
+    showExtra("Cover art prompt — copy this into ChatGPT / DALL-E / Midjourney",await callStory(sys,p,400));
+  }catch(e){document.getElementById("bibleExtra").innerHTML=`<div class="banner">${esc(e.message)}${isRateLimit(e.message)?" — rate limit. Wait and retry.":""}</div>`;}
+  busy=false;btn.disabled=false;btn.textContent=o;
+}
 function download(name,content,type){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);}
 function exportMd(){let md=`# ${proj.title}\n\n`;proj.chapters.forEach(c=>{md+=`\n\n## Chapter ${c.n}: ${c.title}\n\n${c.text}\n`;});download((proj.title||"webnovel").replace(/[^a-z0-9]+/gi,"_")+".md",md,"text/markdown");}
 function exportJson(){syncTracker();download((proj.title||"webnovel").replace(/[^a-z0-9]+/gi,"_")+"_backup.json",JSON.stringify(proj,null,2),"application/json");}
@@ -2840,6 +2856,7 @@ document.querySelectorAll('#readerPrefs [data-theme]').forEach(b=>b.addEventList
 applyReaderPrefs();
 document.getElementById("genTitle").addEventListener("click",genTitle);
 document.getElementById("genSynopsis").addEventListener("click",genSynopsis);
+document.getElementById("genCoverPrompt").addEventListener("click",genCoverPrompt);
 document.getElementById("clearChaps").addEventListener("click",clearAllChapters);
 document.getElementById("newProjTop").addEventListener("click",createProject);
 document.getElementById("renameProj").addEventListener("click",renameProject);
