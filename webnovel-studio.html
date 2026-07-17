@@ -89,6 +89,22 @@ textarea{resize:vertical;}
 .reader.theme-night{background:#050608;color:#c8ccd2;border-color:#1a2028;}
 .reader.theme-night h2{color:#9fb2c8;}
 .reader.theme-night .rbar{border-bottom-color:#1a2028;}
+/* READ MODE — full-screen, distraction-free continuous reading. Reuses the reader's own theme
+   classes and font-size preference so it feels like the same book, just without the machinery. */
+.rm-overlay{position:fixed;inset:0;z-index:6000;overflow-y:auto;display:none;background:var(--card);color:var(--paper);}
+.rm-overlay.theme-sepia{background:#efe6d6;color:#3a3226;}
+.rm-overlay.theme-night{background:#050608;color:#c8ccd2;}
+.rm-bar{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:8px 14px;background:rgba(12,10,6,.82);backdrop-filter:blur(7px);border-bottom:1px solid var(--line);}
+.rm-overlay.theme-sepia .rm-bar{background:rgba(239,230,214,.88);border-bottom-color:#d8c9a8;}
+.rm-overlay.theme-night .rm-bar{background:rgba(5,6,8,.88);border-bottom-color:#1a2028;}
+.rm-progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--gold);z-index:3;}
+.rm-wrap{max-width:44rem;margin:0 auto;padding:34px 22px 140px;font-size:var(--reader-fs,17px);line-height:1.78;}
+.rm-ch h2{font-family:'Fraunces',serif;font-weight:600;font-size:27px;color:var(--gold-2);margin:0 0 20px;line-height:1.25;}
+.rm-overlay.theme-sepia .rm-ch h2{color:#7a5a1e;}
+.rm-overlay.theme-night .rm-ch h2{color:#9fb2c8;}
+.rm-ch p{margin:0 0 16px;}
+.rm-sep{text-align:center;color:var(--faint);margin:52px 0;letter-spacing:.55em;font-size:12px;}
+@media(max-width:680px){.rm-wrap{padding:24px 16px 110px;}.rm-ch h2{font-size:22px;}}
 .cover img{width:100%;max-width:300px;border-radius:5px;border:1px solid var(--line);display:block;margin:0 auto 8px;}
 .statline{font-family:'Fraunces',serif;font-style:italic;color:var(--muted);font-size:14px;margin:4px 0 10px;}
 .sb-wrap{margin:2px 0 14px;}
@@ -259,6 +275,22 @@ h1{font-size:26px;}
     </div>
     <div class="shelf-grid" id="shelfGrid"></div>
   </div>
+</div>
+<div class="rm-overlay" id="readMode">
+  <div class="rm-progress" id="rmProgress"></div>
+  <div class="rm-bar">
+    <button class="rbtn" id="rmClose">✕ Close</button>
+    <span class="rp-sep">·</span>
+    <button class="rbtn" id="rmFontDown" title="Smaller text">A−</button>
+    <button class="rbtn" id="rmFontUp" title="Larger text">A+</button>
+    <span class="rp-sep">·</span>
+    <button class="rbtn" data-rmtheme="dark">Dark</button>
+    <button class="rbtn" data-rmtheme="sepia">Sepia</button>
+    <button class="rbtn" data-rmtheme="night">Night</button>
+    <span style="flex:1"></span>
+    <span class="mini" id="rmMeta"></span>
+  </div>
+  <div class="rm-wrap" id="rmWrap"></div>
 </div>
 <div class="wrap" id="appWrap" style="display:none">
 
@@ -633,6 +665,8 @@ h1{font-size:26px;}
     <button class="rbtn" data-theme="dark">Dark</button>
     <button class="rbtn" data-theme="sepia">Sepia</button>
     <button class="rbtn" data-theme="night">Night</button>
+    <span class="rp-sep">·</span>
+    <button class="rbtn ok-btn" id="openReadModeBtn" title="Read your book straight through, like a reader">📖 Read mode</button>
   </div>
 
   <div class="studio" style="margin-top:12px">
@@ -2268,8 +2302,11 @@ function renderAudit(all){
 async function titleForChapter(body,n,inlineTitle){
   const prevTitles=proj.chapters.map(c=>c.title||"");
   const recent=prevTitles.slice(-20);
-  const overused=[...new Set(prevTitles.map(_titleFirstWord).filter(Boolean))]
-    .map(w=>({w,c:prevTitles.filter(t=>_titleFirstWord(t)===w).length})).filter(x=>x.c>=2).map(x=>x.w);
+  // Ban over-used OPENING words from the RECENT window only. Scoring against every title ever written
+  // means the ban list grows without limit on a long book until almost any title is rejected, burning a
+  // wasted retry call every chapter — and by chapter 400 nobody cares what chapter 3's first word was.
+  const overused=[...new Set(recent.map(_titleFirstWord).filter(Boolean))]
+    .map(w=>({w,c:recent.filter(t=>_titleFirstWord(t)===w).length})).filter(x=>x.c>=2).map(x=>x.w);
   const isBad=t=>{
     if(!t)return true;
     const low=t.toLowerCase();
@@ -2290,6 +2327,12 @@ async function titleForChapter(body,n,inlineTitle){
       title=_cleanTitle(await ask(avoid+ban));
     }
   }catch(e){ if(!title)title=`Chapter ${n}`; }
+  // FINAL GUARD — the retry can still come back duplicated (weaker free models often ignore the ban
+  // list). An EXACT repeat is the one unforgivable case: it makes a reader browsing the contents think
+  // they've already read the chapter. A plain numbered title is dull but never confusing, so prefer it
+  // over shipping a duplicate. Checked against ALL past titles — a repeat 100 chapters apart still reads
+  // as sloppy. A merely-repeated opening word is allowed through: mildly repetitive beats generic.
+  if(title&&prevTitles.some(p=>p.toLowerCase()===title.toLowerCase()))title=`Chapter ${n}`;
   if(!title||title.length>70)title=`Chapter ${n}`;
   return title;
 }
@@ -2850,10 +2893,85 @@ function applyReaderPrefs(){
 }
 function bumpReaderFont(d){let fs=parseInt(localStorage.getItem("wns-reader-fs"),10)||16;fs=Math.max(13,Math.min(26,fs+d));localStorage.setItem("wns-reader-fs",String(fs));applyReaderPrefs();}
 function setReaderTheme(t){localStorage.setItem("wns-reader-theme",t);applyReaderPrefs();}
+/* ===== READ MODE — read your own book straight through, the way a reader does =====
+   Reading your work as an operator (chapter-by-chapter in a pane, edit toolbar on top) hides the
+   things readers notice: repeated titles, drifting voice, a chapter that's suddenly half-length.
+   This renders the whole book as one continuous column. Chapter bodies are injected lazily as they
+   approach the viewport (a 1000-chapter book would lock the browser if built in one go), with a
+   height estimate reserved up-front so the scrollbar stays honest. Loaded chapters are never
+   unloaded — dropping them would change heights and make the page jump under the reader. */
+// Fill in the prose for any chapter near the current scroll window. Driven by scroll + open rather
+// than IntersectionObserver on purpose: IO silently never fires while a page is hidden, and the
+// failure mode there is a reader staring at blank chapters. A plain scroll check cannot fail that way.
+function _rmFillNearby(){
+  const ov=document.getElementById("readMode");
+  if(!ov||ov.style.display!=="block")return;
+  const top=ov.scrollTop-1500,bottom=ov.scrollTop+ov.clientHeight+1500;
+  const secs=ov.querySelectorAll(".rm-ch");
+  for(let k=0;k<secs.length;k++){
+    const s=secs[k],o=s.offsetTop;
+    if(o>bottom)break;                 // sections are in document order — everything after is further away
+    if(o+s.offsetHeight<top)continue;  // scrolled well past this one
+    const body=s.querySelector(".rm-body");
+    if(!body||body.dataset.filled)continue;
+    body.innerHTML=mdToHtml(proj.chapters[+s.dataset.i].text);
+    body.style.minHeight="";           // estimate served its purpose; let real content set the height
+    body.dataset.filled="1";
+  }
+}
+function openReadMode(){
+  const chs=proj.chapters||[];
+  if(!chs.length){alert("No chapters to read yet — write one first.");return;}
+  const ov=document.getElementById("readMode"),wrap=document.getElementById("rmWrap");
+  wrap.innerHTML=chs.map((c,i)=>{
+    const est=Math.max(220,Math.round(wc(c.text)*2.4)); // ~2.4px of column height per word — keeps the scrollbar honest before load
+    return `<section class="rm-ch" data-i="${i}"><h2>Chapter ${c.n}: ${esc(c.title||"")}</h2><div class="rm-body" style="min-height:${est}px"></div></section>`;
+  }).join('<div class="rm-sep">◆◆◆</div>');
+  applyReadModeTheme();
+  ov.style.display="block";
+  document.body.style.overflow="hidden"; // stop the page behind from scrolling too
+  const target=wrap.querySelector(`.rm-ch[data-i="${Math.max(0,activeChapter)}"]`);
+  if(target)ov.scrollTop=Math.max(0,target.offsetTop-12); // pick up where you left off
+  _rmFillNearby();
+  updateRmProgress();
+}
+function closeReadMode(){
+  const ov=document.getElementById("readMode");
+  ov.style.display="none";
+  document.body.style.overflow="";
+  document.getElementById("rmWrap").innerHTML=""; // free the prose DOM
+}
+function applyReadModeTheme(){
+  const ov=document.getElementById("readMode");if(!ov)return;
+  let fs=parseInt(localStorage.getItem("wns-reader-fs"),10);if(!fs||isNaN(fs))fs=16;fs=Math.max(13,Math.min(26,fs));
+  ov.style.setProperty("--reader-fs",(fs+1)+"px"); // a touch larger full-screen than in the cramped pane
+  const theme=localStorage.getItem("wns-reader-theme")||"dark";
+  ov.classList.remove("theme-sepia","theme-night");
+  if(theme==="sepia")ov.classList.add("theme-sepia");else if(theme==="night")ov.classList.add("theme-night");
+  ov.querySelectorAll("[data-rmtheme]").forEach(b=>b.classList.toggle("active",b.dataset.rmtheme===theme));
+}
+function updateRmProgress(){
+  const ov=document.getElementById("readMode"),bar=document.getElementById("rmProgress"),meta=document.getElementById("rmMeta");
+  if(!ov||!bar)return;
+  const max=ov.scrollHeight-ov.clientHeight;
+  const pct=max>20?Math.min(100,Math.round((ov.scrollTop/max)*100)):0;
+  bar.style.width=pct+"%";
+  let cur=1;ov.querySelectorAll(".rm-ch").forEach(s=>{if(s.offsetTop-80<=ov.scrollTop)cur=(+s.dataset.i)+1;});
+  if(meta)meta.textContent=`Ch ${cur} / ${(proj.chapters||[]).length} · ${pct}%`;
+}
 document.getElementById("fontUp").addEventListener("click",()=>bumpReaderFont(1));
 document.getElementById("fontDown").addEventListener("click",()=>bumpReaderFont(-1));
 document.querySelectorAll('#readerPrefs [data-theme]').forEach(b=>b.addEventListener("click",()=>setReaderTheme(b.dataset.theme)));
 applyReaderPrefs();
+// Read mode wiring
+document.getElementById("openReadModeBtn").addEventListener("click",openReadMode);
+document.getElementById("rmClose").addEventListener("click",closeReadMode);
+document.getElementById("rmFontUp").addEventListener("click",()=>{bumpReaderFont(1);applyReadModeTheme();});
+document.getElementById("rmFontDown").addEventListener("click",()=>{bumpReaderFont(-1);applyReadModeTheme();});
+document.querySelectorAll('#readMode [data-rmtheme]').forEach(b=>b.addEventListener("click",()=>{setReaderTheme(b.dataset.rmtheme);applyReadModeTheme();}));
+let _rmTick=false;
+document.getElementById("readMode").addEventListener("scroll",()=>{ if(!_rmTick){_rmTick=true;requestAnimationFrame(()=>{_rmFillNearby();updateRmProgress();_rmTick=false;});} });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&document.getElementById("readMode").style.display==="block")closeReadMode(); });
 document.getElementById("genTitle").addEventListener("click",genTitle);
 document.getElementById("genSynopsis").addEventListener("click",genSynopsis);
 document.getElementById("genCoverPrompt").addEventListener("click",genCoverPrompt);
