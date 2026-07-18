@@ -359,6 +359,7 @@ h1{font-size:26px;}
         <option value="gemini" selected>Gemini — free (best free prose)</option>
         <option value="groq">Groq — free &amp; fast</option>
         <option value="mistral">Mistral — free (literary voice)</option>
+        <option value="ollama">Ollama — local, unlimited (advanced, needs setup)</option>
         <option value="hybrid">Claude — best prose (paid)</option>
       </select>
       <div class="mini" id="usageHint" style="margin-top:4px;color:var(--faint)"></div>
@@ -368,10 +369,18 @@ h1{font-size:26px;}
       <input id="backendurl" placeholder="http://localhost:8787" />
     </div>
   </div>
-  <div style="margin-top:9px">
+  <div style="margin-top:9px" id="apiKeyRow">
     <label class="label" for="apiKey">Your API key <span style="font-weight:400;color:var(--faint);font-size:12px">— free &amp; unlimited; stays in your browser only. <a id="getKeyLink" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--gold)">Get your free key →</a></span></label>
     <input id="apiKey" type="password" placeholder="Paste your free API key here (one-time setup)" autocomplete="off" spellcheck="false" />
     <div class="mini" id="apiKeyHint">Free from Google AI Studio — no credit card. Takes 2 minutes. Your key is saved only on this device and used only to write your chapters.</div>
+  </div>
+  <div style="margin-top:9px;display:none" id="ollamaRow">
+    <label class="label">Ollama <span style="font-weight:400;color:var(--faint);font-size:12px">— runs a model on THIS computer. No API key, no daily limit, completely free forever. Requires: <a href="https://ollama.com" target="_blank" rel="noopener" style="color:var(--gold)">Ollama installed</a>, a model pulled (e.g. run <code>ollama pull llama3.1</code> in a terminal), and it running (<code>ollama serve</code>).</span></label>
+    <div class="row">
+      <div><input id="ollamaUrl" placeholder="http://localhost:11434" /></div>
+      <div><input id="ollamaModel" placeholder="e.g. llama3.1, mistral, qwen2.5:14b" /></div>
+    </div>
+    <div class="mini" style="margin-top:4px" id="ollamaHint">This connects your browser DIRECTLY to Ollama on your machine — the app's backend never sees this traffic. If it fails with a connection or CORS error, make sure Ollama is running and, if needed, start it with <code>OLLAMA_ORIGINS=*</code> set so your browser is allowed to reach it.</div>
   </div>
   <label class="ck" style="margin-top:10px;display:block"><input type="checkbox" id="lockEngine" /> Lock engine (no silent fallback) — fail loudly instead of silently switching models. Recommended for long books once you've picked the engine you want, so the voice doesn't drift between chapters.</label>
 </div>
@@ -1302,12 +1311,48 @@ function getApiKeys(){try{return JSON.parse(localStorage.getItem("wns-api-keys")
 function setApiKeyFor(p,v){const k=getApiKeys();k[p]=v;try{localStorage.setItem("wns-api-keys",JSON.stringify(k));}catch{}}
 function currentApiKey(){return getApiKeys()[provider()]||"";}
 function refreshApiKeyField(){
-  const p=provider();const meta=KEY_META[p]||KEY_META.gemini;
+  const p=provider();
+  const isOllama=p==="ollama";
+  const apiRow=document.getElementById("apiKeyRow"),ollamaRow=document.getElementById("ollamaRow");
+  if(apiRow)apiRow.style.display=isOllama?"none":"";
+  if(ollamaRow)ollamaRow.style.display=isOllama?"":"none";
+  if(isOllama)return; // Ollama has its own fields (loaded separately), no API key concept applies
+  const meta=KEY_META[p]||KEY_META.gemini;
   const inp=document.getElementById("apiKey");if(inp)inp.value=getApiKeys()[p]||"";
   const link=document.getElementById("getKeyLink");if(link)link.href=meta.link;
   const hint=document.getElementById("apiKeyHint");if(hint)hint.textContent=meta.hint;
 }
-async function callStory(system,prompt,maxTokens){const base=backendBase();if(!base)throw new Error("Set Backend URL first.");const apiKey=currentApiKey();if(!apiKey)throw new Error("Add your free API key first — see the 'Your API key' field up top (Get your free key → link).");const keys=getApiKeys();const r=await fetch(base+"/story",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system,prompt,provider:provider(),maxTokens,lockEngine:lockEngineOn(),apiKey,keys})});let d;try{d=await r.json();}catch{throw new Error("Backend did not return JSON.");}if(!r.ok||(d&&d.error))throw new Error((d&&d.error)||("Backend error HTTP "+r.status));if(!d||typeof d.text!=="string"||!d.text.trim())throw new Error("Empty response from model.");lastUsedEngine=d.used||"";if(lastUsedEngine)bumpUsage(lastUsedEngine);return d.text.trim();}
+async function callStory(system,prompt,maxTokens){
+  // OLLAMA runs on THIS computer, not in the cloud — the app's Vercel backend physically cannot reach
+  // "localhost" on the user's machine, so this one engine must be called directly from the browser,
+  // bypassing backendBase()/apiKey entirely. Every other engine still goes through the normal backend.
+  if(provider()==="ollama")return await callOllama(system,prompt,maxTokens);
+  const base=backendBase();if(!base)throw new Error("Set Backend URL first.");const apiKey=currentApiKey();if(!apiKey)throw new Error("Add your free API key first — see the 'Your API key' field up top (Get your free key → link).");const keys=getApiKeys();const r=await fetch(base+"/story",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system,prompt,provider:provider(),maxTokens,lockEngine:lockEngineOn(),apiKey,keys})});let d;try{d=await r.json();}catch{throw new Error("Backend did not return JSON.");}if(!r.ok||(d&&d.error))throw new Error((d&&d.error)||("Backend error HTTP "+r.status));if(!d||typeof d.text!=="string"||!d.text.trim())throw new Error("Empty response from model.");lastUsedEngine=d.used||"";if(lastUsedEngine)bumpUsage(lastUsedEngine);return d.text.trim();}
+function ollamaUrl(){return (document.getElementById("ollamaUrl").value||"http://localhost:11434").trim().replace(/\/+$/,"");}
+function ollamaModel(){return (document.getElementById("ollamaModel").value||"").trim();}
+async function callOllama(system,prompt,maxTokens){
+  const url=ollamaUrl(),model=ollamaModel();
+  if(!model)throw new Error("Set a model name for Ollama first (e.g. llama3.1) — the exact name must match one you've pulled with 'ollama pull <name>'.");
+  const messages=[]; if(system)messages.push({role:"system",content:system}); messages.push({role:"user",content:prompt});
+  let r;
+  try{
+    r=await fetch(url+"/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model,messages,stream:false,options:{temperature:0.95,num_predict:maxTokens||1000}})});
+  }catch(e){
+    // fetch() throws a generic, detail-free error for network failures/CORS blocks — translate it into
+    // the specific, actionable things that actually go wrong with a local Ollama setup.
+    throw new Error(`Couldn't reach Ollama at ${url}. Check: 1) Ollama is running ('ollama serve'), 2) the URL above is correct, 3) if you see this from a hosted site (not localhost), start Ollama with OLLAMA_ORIGINS=* so it accepts requests from your browser.`);
+  }
+  let d; try{d=await r.json();}catch{throw new Error("Ollama did not return JSON — is the URL correct and pointing at Ollama, not something else?");}
+  if(!r.ok||d.error){
+    const base=d.error||("Ollama HTTP "+r.status);
+    const suggestion=/model.*not found|no such model/i.test(base)?` — run 'ollama pull ${model}' first.`:"";
+    throw new Error(base+suggestion);
+  }
+  const text=d&&d.message&&typeof d.message.content==="string"?d.message.content:"";
+  if(!text.trim())throw new Error("Empty response from Ollama.");
+  lastUsedEngine="ollama";
+  return text.trim();
+}
 // DAILY USAGE ESTIMATE — client-side only, so it's a rough count of calls made from THIS browser
 // today, not a real quota readout (the actual limit lives on Google/Groq/Mistral's servers and can
 // differ per key or device). Still useful to avoid discovering a quota wall mid-chapter.
@@ -1324,6 +1369,7 @@ function renderUsageHint(){
   const el=document.getElementById("usageHint"); if(!el) return;
   const p=provider();
   if(p==="claude"){ el.textContent="Paid — billed per call, no daily cap here."; return; }
+  if(p==="ollama"){ el.textContent="Local — unlimited, free forever. Speed depends on your own computer."; return; }
   const today=new Date().toDateString();
   let u={}; try{u=JSON.parse(localStorage.getItem("wns-usage"))||{};}catch(e){}
   const n=(u.date===today && u.counts && u.counts[p])||0;
@@ -1613,23 +1659,44 @@ const POWER_SYSTEMS = {
     rules: "POWER RULES:\n- Make the world and terminology ORIGINAL. Invent your own association names, gate/rift terminology, monster types, and the protagonist's unique growth mechanic. Do NOT reuse Solo Leveling's proper nouns, 'Shadow Monarch', 'Rulers/Monarchs', Igris/Beru/Ashborn, or its exact System wording.\n- If the protagonist has a unique leveling/growth ability, make it the rare exception in a world where everyone else is rank-locked — and give it its OWN identity, costs, and limits.\n- Keep rank gaps meaningful: an S-rank vastly outclasses an A-rank; a single high-rank hunter can clear gates that need whole teams of lower ranks.\n- Track the protagonist's current rank, known skills, and any 'system' quests/rewards consistently. Honor gate timers and dungeon-break stakes.\n- Ground it in the modern-world-with-gates premise unless the idea says otherwise."
   }
 };
-/* ===== GENRE PRESETS — quick-pick + craft guidance fed into bible & chapters ===== */
+/* ===== GENRE PRESETS — quick-pick + craft guidance fed into bible & chapters =====
+   CRAFT LIBRARY — each genre carries a short "desc" (tone/feel, shown in the UI) and a deeper "craft"
+   block: concrete, actionable technique conventions distilled from how the genre is written broadly —
+   pacing rhythms, structural patterns, common pitfalls to avoid. This is general writing-craft
+   knowledge (the same kind taught in craft books like Save the Cat or discussed in genre writing
+   communities), NEVER text or plot from any specific novel — same legal footing as the power-system
+   guides above: techniques aren't copyrightable, specific text and plots are. */
 const GENRES = {
-  "Dark Fantasy":"grim, morally grey fantasy; dread under wonder; consequences are real and costly.",
-  "Cultivation / Xianxia":"eastern cultivation fantasy; sects, qi, realms, dao insight, ruthless power hierarchy.",
-  "Murim / Wuxia":"martial-arts world of clans and sects; honor, vengeance, internal energy, factional war.",
-  "Hunter / LitRPG":"modern world with gates, awakened hunters, ranks and a game-like growth system.",
-  "Psychological":"interiority, unreliable perception, obsession and unraveling minds; tension from within, not action. Use deep POV, creeping doubt, and ambiguity.",
-  "Horror":"mounting dread, the uncanny, helplessness; restraint and implication scarier than gore. Build sensory wrongness; let safety erode slowly.",
-  "Thriller / Suspense":"relentless momentum, ticking clocks, twists and reversals; every scene raises stakes or tightens the noose.",
-  "Mystery / Detective":"clues, red herrings, fair-play deduction; withhold and reveal with control; the reader should feel they could solve it.",
-  "Romance":"emotional intimacy and yearning; tension from want vs obstacle; earn every beat of connection through specific moments.",
-  "Slice of Life / Real Life":"grounded, contemporary, character-driven; small true moments, ordinary stakes made meaningful; honest dialogue, no melodrama.",
-  "Sci-Fi":"speculative tech/worlds with internal logic; wonder plus consequence; ground big ideas in concrete human stakes.",
-  "Epic / High Fantasy":"expansive world, mythic scope, multiple powers and factions; lore and grandeur balanced with personal stakes.",
-  "Tragedy / Literary":"character flaw drives inevitable downfall; lyrical precision, deep interiority, emotional truth over plot mechanics.",
-  "Action / Adventure":"kinetic momentum, set-pieces, exploration and danger; clear stakes, vivid choreography, forward drive.",
-  "Crime / Noir":"morally murky underworld; cynical voice, atmosphere of corruption, sharp dialogue, consequences catch up."
+  "Dark Fantasy":{desc:"grim, morally grey fantasy; dread under wonder; consequences are real and costly.",
+    craft:"- Cost economy: every victory or power gained must cost something visible (a relationship, a piece of self, a resource) — darkness that costs nothing reads as edgy set-dressing, not stakes.\n- Moral grey means BOTH sides have a real argument, not 'good guy who curses a lot.' Villains should be right about something.\n- Avoid grimdark-for-shock: cruelty needs to reveal character or escalate stakes, never exist just to prove the world is bleak."},
+  "Cultivation / Xianxia":{desc:"eastern cultivation fantasy; sects, qi, realms, dao insight, ruthless power hierarchy.",
+    craft:"- Face-slapping convention: an arrogant higher-status character underestimates the protagonist, is humbled — earn this by grounding the humiliation in something the protagonist actually worked for, not raw luck.\n- Resource/tribulation arcs: gate chapters around gathering resources for a breakthrough, then the breakthrough attempt itself as a tentpole, not a throwaway line.\n- Bottleneck chapters (stuck at a realm, needing insight not just time) create tension without combat — use them, don't skip straight to the next fight.\n- Reference sect/clan hierarchy and the protagonist's exact standing in it consistently; readers track this closely."},
+  "Murim / Wuxia":{desc:"martial-arts world of clans and sects; honor, vengeance, internal energy, factional war.",
+    craft:"- Master-disciple bonds carry real emotional weight — a master's death or betrayal should land as hard as a family loss.\n- Revenge arcs need an escalating ladder of targets, not one final villain reached too early; each defeated enemy should reveal the next, larger threat.\n- Factional politics (righteous/unorthodox/demonic) should create moral complexity — 'righteous' factions can be corrupt, 'demonic' ones can have honor.\n- Tournament/sect-conflict arcs work best when the protagonist's rank gap to rivals is meaningful and tracked, not vague."},
+  "Hunter / LitRPG":{desc:"modern world with gates, awakened hunters, ranks and a game-like growth system.",
+    craft:"- Never front-load stat screens: reveal growth through an EARNED moment (a fight won because of a new skill) before showing the numbers behind it, not the reverse.\n- Dungeon-clear rhythm: recon → complication → fight → boss → cost/loot, varied chapter to chapter so it doesn't feel like a checklist.\n- Party dynamics need friction, not just competence — trust has to be built, not assumed from chapter one.\n- Keep the protagonist's exact rank/skills consistent; LitRPG readers track numbers precisely and notice drift immediately."},
+  "Psychological":{desc:"interiority, unreliable perception, obsession and unraveling minds; tension from within, not action. Use deep POV, creeping doubt, and ambiguity.",
+    craft:"- Unreliability should be SHOWN through small contradictions (a detail that doesn't match, a gap in memory) — never announced by the narrator.\n- Escalate doubt gradually: the reader should feel increasingly uncertain of what's real at roughly the same pace the protagonist does.\n- Avoid melodrama — the scarier/sadder the internal state, the MORE restrained and precise the prose should be, not less.\n- A psychological read lives or dies on specificity of interior detail; generic anxiety description reads as filler."},
+  "Horror":{desc:"mounting dread, the uncanny, helplessness; restraint and implication scarier than gore. Build sensory wrongness; let safety erode slowly.",
+    craft:"- Withhold full explanation of the threat past the midpoint at minimum — clarity kills dread; ambiguity about the exact nature/rules of the threat is a feature, not a gap.\n- Erode safety in small, specific increments (a familiar place changes one detail at a time) rather than one big reveal.\n- The quiet-before-the-scare beat matters as much as the scare itself — a scare with no calm contrast lands flat.\n- Implication and what's NOT shown should carry more weight than graphic description."},
+  "Thriller / Suspense":{desc:"relentless momentum, ticking clocks, twists and reversals; every scene raises stakes or tightens the noose.",
+    craft:"- A ticking clock (explicit deadline or implicit escalating threat) should be present or referenced in most chapters — momentum is the genre's core promise.\n- Rotate red herrings/suspects so no single one is telegraphed too early; the reader should suspect at least 2-3 people credibly across the book.\n- Every chapter should end on a hook that changes the immediate situation, not just a vague sense of unease.\n- Don't let the protagonist solve the central puzzle faster than the pacing can sustain — reversals should arrive when the reader thinks they've caught up."},
+  "Mystery / Detective":{desc:"clues, red herrings, fair-play deduction; withhold and reveal with control; the reader should feel they could solve it.",
+    craft:"- Fair-play rule: every clue the detective uses to solve the case must have been shown to the reader BEFORE the reveal — never introduce the key clue only in the solution chapter.\n- Balance clue density: too few and the solve feels unearned; too many and the answer becomes obvious. Aim for a mix of real clues and plausible-but-wrong red herrings.\n- The detective should not withhold their own reasoning from the reader for cheap suspense — let the reader follow the logic, even if they don't reach it first.\n- Reveal in stages: a partial theory that's wrong, then the full correct solution, rather than one flat info-dump reveal."},
+  "Romance":{desc:"emotional intimacy and yearning; tension from want vs obstacle; earn every beat of connection through specific moments.",
+    craft:"- Avoid manufactured miscommunication as the primary conflict engine — modern romance craft treats this as a weak, frustrating device; ground conflict in real incompatible goals or fears instead.\n- Earn vulnerability beats: a character opening up should follow specific trust built over prior scenes, not happen because the plot needs it now.\n- Escalate physical/emotional intimacy in clearly earned stages — track exactly what's been established between the leads so it doesn't jump.\n- Give both leads a want AND a fear about the relationship — tension comes from both, not just external obstacles."},
+  "Slice of Life / Real Life":{desc:"grounded, contemporary, character-driven; small true moments, ordinary stakes made meaningful; honest dialogue, no melodrama.",
+    craft:"- Low external stakes still need a real THROUGHLINE — an internal want or question the character is working through across chapters, or the story reads as meandering.\n- Specificity is everything: a generic 'nice day at the cafe' scene is filler; a highly specific, sensory-grounded ordinary moment is the genre's whole appeal.\n- Avoid melodrama creeping in to manufacture stakes — trust small, honest moments to carry emotional weight.\n- Balance episodic chapters (self-contained) with a slow-building serialized thread so readers have a reason to keep following."},
+  "Sci-Fi":{desc:"speculative tech/worlds with internal logic; wonder plus consequence; ground big ideas in concrete human stakes.",
+    craft:"- Reveal world/tech rules through ACTION and consequence, not lecture — a character using or being hurt by the tech teaches the reader the rule.\n- Follow the 'if this, then what' discipline: once a speculative rule is established, trace its logical social/personal consequences rather than ignoring them when inconvenient.\n- Ground every big idea in a concrete human stake — wonder without a personal cost reads as a lecture, not a story.\n- Avoid front-loaded exposition dumps in early chapters; let curiosity about the world be a hook, not a wall of setup."},
+  "Epic / High Fantasy":{desc:"expansive world, mythic scope, multiple powers and factions; lore and grandeur balanced with personal stakes.",
+    craft:"- If using multiple POVs, give each one a distinct, trackable want and give their chapters a genuinely different function in the plot — never rotate POV just for variety.\n- Reveal worldbuilding through conflict and character need, not travelogue description — lore should answer a question the plot just raised.\n- Balance mythic scope with a personal stake the reader can hold onto — an empire-ending threat still needs to matter to one person concretely.\n- Avoid sprawl: track the throughline connecting every faction/subplot back to the protagonist's actual arc."},
+  "Tragedy / Literary":{desc:"character flaw drives inevitable downfall; lyrical precision, deep interiority, emotional truth over plot mechanics.",
+    craft:"- The downfall must be caused by the character's own established flaw, not by bad luck or outside villainy — inevitability comes from character, not circumstance.\n- Plant the flaw early and let the reader see it operating in small ways before it becomes fatal — the ending should feel earned in hindsight, not sudden.\n- Restraint over melodrama: the more tragic the beat, the more precise and understated the prose should be.\n- Emotional truth over plot mechanics — a scene can matter without moving the external plot forward."},
+  "Action / Adventure":{desc:"kinetic momentum, set-pieces, exploration and danger; clear stakes, vivid choreography, forward drive.",
+    craft:"- Vary set-piece TYPE and rhythm — not every action beat should be a fight; alternate chase, puzzle-under-pressure, environmental hazard, and confrontation so choreography doesn't repeat.\n- Give every set-piece a breather beat before or after — constant maximum intensity flattens tension rather than building it.\n- Ground action in clear physical geography (per the app's own action-clarity rule) so set-pieces can actually be pictured, not just felt.\n- Stakes should escalate concretely across set-pieces — the danger in chapter 20 should be traceably worse than chapter 5, not just louder."},
+  "Crime / Noir":{desc:"morally murky underworld; cynical voice, atmosphere of corruption, sharp dialogue, consequences catch up.",
+    craft:"- The protagonist's moral ambiguity should be ACTIVE — they make compromised choices on-page, not just narrate cynically about a corrupt world.\n- Atmosphere comes from specific, grounded sensory detail (a place, a texture, a smell) — cynicism-as-narration-style without concrete grounding reads as posturing.\n- Dialogue should carry subtext and economy — noir voice is sharp and clipped, not verbose.\n- Consequences must eventually catch up with compromised choices — noir's moral order is bleak but not arbitrary; actions still matter."}
 };
 function genreGuide(){
   const g=(proj.setup&&proj.setup.genre)||"";
@@ -1641,7 +1708,7 @@ function genreGuide(){
     return words.some(w=>gl.includes(w));
   });
   if(!hits.length) return "";
-  return "\nGENRE CRAFT — write to the conventions and feel of this genre:\n"+hits.map(k=>`- ${k}: ${GENRES[k]}`).join("\n")+"\n";
+  return "\nGENRE CRAFT — write to the conventions and feel of this genre:\n"+hits.map(k=>`- ${k}: ${GENRES[k].desc}\n${GENRES[k].craft}`).join("\n")+"\n";
 }
 function renderGenreChips(){
   const wrap=document.getElementById("genreChips"); if(!wrap) return;
@@ -2986,6 +3053,14 @@ document.getElementById("lockEngine").addEventListener("change",()=>{proj._lockE
 document.getElementById("mode").addEventListener("change",refreshApiKeyField);
 document.getElementById("mode").addEventListener("change",renderUsageHint);
 renderUsageHint();
+// Ollama config — device-level like the other engines' keys, not tied to any one project.
+(function(){
+  const urlEl=document.getElementById("ollamaUrl"),modelEl=document.getElementById("ollamaModel");
+  try{ urlEl.value=localStorage.getItem("wns-ollama-url")||"http://localhost:11434"; }catch(e){ urlEl.value="http://localhost:11434"; }
+  try{ modelEl.value=localStorage.getItem("wns-ollama-model")||""; }catch(e){}
+  urlEl.addEventListener("input",()=>{try{localStorage.setItem("wns-ollama-url",urlEl.value.trim());}catch(e){}});
+  modelEl.addEventListener("input",()=>{try{localStorage.setItem("wns-ollama-model",modelEl.value.trim());}catch(e){}});
+})();
 document.getElementById("novelBotAsk").addEventListener("click",askNovelBot);
 document.getElementById("novelBotQ").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();askNovelBot();}});
 document.getElementById("apiKey").addEventListener("input",()=>{setApiKeyFor(provider(),document.getElementById("apiKey").value.trim());});
