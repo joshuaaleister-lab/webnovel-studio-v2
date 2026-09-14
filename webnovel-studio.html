@@ -2639,12 +2639,15 @@ let _polishPending=null; // {idx, text}
 // Replace em/en dashes (the #1 AI tell) with human punctuation. Keeps hyphens in compound words.
 function stripDashes(t){
   if(!t) return t;
+  // IMPORTANT: every cleanup below only touches spaces/tabs, NEVER \n — collapsing "\s" (which
+  // includes newlines) here previously destroyed every paragraph break (\n\n -> " "), turning
+  // whole chapters into one unreadable wall of text. Paragraph breaks must survive this function.
   return t
-    .replace(/\s*[—–]\s*/g, ", ")   // em/en dash with spaces -> comma
-    .replace(/\s+--\s+/g, ", ")       // double hyphen as dash -> comma
-    .replace(/,\s*,/g, ",")           // collapse accidental double commas
-    .replace(/,\s*\./g, ".")          // comma before period cleanup
-    .replace(/\s{2,}/g, " ");
+    .replace(/[ \t]*[—–][ \t]*/g, ", ")   // em/en dash with spaces -> comma (never eats newlines)
+    .replace(/[ \t]+--[ \t]+/g, ", ")       // double hyphen as dash -> comma
+    .replace(/,[ \t]*,/g, ",")             // collapse accidental double commas
+    .replace(/,[ \t]*\./g, ".")            // comma before period cleanup
+    .replace(/[ \t]{2,}/g, " ");           // collapse runs of spaces/tabs only, not newlines
 }
 // Models often emit markdown emphasis (**bold**, *italic*) out of habit. This app's own Reader renders
 // it fine via mdToHtml(), but pasting into Webnovel's plain editor (or most export targets) shows the
